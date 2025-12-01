@@ -1,0 +1,54 @@
+{
+    "name": "MyInputMap",
+    "maps": [
+        {
+            "name": "VRBasic",
+            "id": "496c32ea-5d66-493c-ac39-adccb76c7104",
+            "actions": [
+                {
+                    "name": "LH_TrackState",
+                    "type": "Button",
+                    "id": "c5efd29a-3159-4a8f-927c-de9f32d3f59a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RH_TrackState",
+                    "type": "Button",
+                    "id": "45f6beeb-c813-4dc1-ad2d-5d319eb1dfd0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "b75c2b18-ea4c-42c3-a2e5-6affbc3b9d74",
+                    "path": "<XRController>{LeftHand}/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LH_TrackState",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b193eef6-6fb2-470d-b0b2-79df5fd75e1e",
+                    "path": "<XRController>{RightHand}/isTracked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RH_TrackState",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
