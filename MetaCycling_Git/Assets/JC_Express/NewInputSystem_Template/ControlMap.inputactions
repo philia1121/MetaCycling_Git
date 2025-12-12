@@ -481,6 +481,17 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "",
+                    "id": "41987f4d-5ae3-463e-b272-9a8f441e68f2",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RecordButton",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
                     "name": "One Modifier",
                     "id": "cd0d16c1-3f00-47b7-b122-da836b5263dc",
                     "path": "OneModifier",

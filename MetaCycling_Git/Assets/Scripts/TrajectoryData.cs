@@ -4,39 +4,38 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class Waypoint
-{
-    public Vector3 position;
-    public Quaternion rotation;
-    public float timestamp; // 用於重現速度節奏
-
-    public Waypoint(Vector3 pos, Quaternion rot, float time)
-    {
-        position = pos;
-        rotation = rot;
-        timestamp = time;
-    }
-}
-[System.Serializable]
 public class MultiTrackWaypoint
 {
     public float timestamp;
 
-    // 1. 左控制器 (Left Controller / LTouch)
-    public Vector3 posL_Cont;
-    public Quaternion rotL_Cont;
+    // Left Controller
+    public Vector3 pos_LCont;
+    public Vector3 rot_LCont;
 
-    // 2. 右控制器 (Right Controller / RTouch)
-    public Vector3 posR_Cont;
-    public Quaternion rotR_Cont;
+    // Right Controller
+    public Vector3 pos_RCont;
+    public Vector3 rot_RCont;
 
-    // 3. 左手 (Left Hand / LHand - 需開啟 Hand Tracking 或 Multimodal)
-    public Vector3 posL_Hand;
-    public Quaternion rotL_Hand;
+    // Left Hand
+    public Vector3 pos_LHand;
+    public Vector3 rot_LHand;
 
-    // 4. 右手 (Right Hand / RHand - 需開啟 Hand Tracking 或 Multimodal)
-    public Vector3 posR_Hand;
-    public Quaternion rotR_Hand;
+    // Right Hand
+    public Vector3 pos_RHand;
+    public Vector3 rot_RHand;
+
+    // HMD
+    public Vector3 pos_HMD;
+    public Vector3 rot_HMD;
+
+    public bool RHand_PosTracked;
+    public bool RHand_RotTracked;
+    public bool RCont_PosTracked;
+    public bool RCont_RotTracked;
+    public bool LHand_PosTracked;
+    public bool LHand_RotTracked;
+    public bool LCont_PosTracked;
+    public bool LCont_RotTracked;
 }
 
 [System.Serializable]
