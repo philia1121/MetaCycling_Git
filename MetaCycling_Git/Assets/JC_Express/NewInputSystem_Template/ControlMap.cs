@@ -342,7 +342,16 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""MoveDrone"",
+                    ""name"": ""LJoystick"",
+                    ""type"": ""Value"",
+                    ""id"": ""ee0f1d77-81b7-43dd-8ed9-00cc3a2c44e0"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""RJoystick"",
                     ""type"": ""Value"",
                     ""id"": ""3e908f4e-d8ab-4aa5-a2a2-65189ffa59cd"",
                     ""expectedControlType"": ""Vector2"",
@@ -437,37 +446,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""One Modifier"",
-                    ""id"": ""7a981f62-128a-441d-a264-a6d1fcab4052"",
-                    ""path"": ""OneModifier"",
+                    ""name"": """",
+                    ""id"": ""143ad251-106c-4ffa-b785-627d68f2a070"",
+                    ""path"": ""<XRController>{RightHand}/primary2DAxis"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""MoveDrone"",
-                    ""isComposite"": true,
+                    ""action"": ""RJoystick"",
+                    ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""modifier"",
-                    ""id"": ""3c1b17b0-7370-49f1-bef6-49af9dcecf6a"",
-                    ""path"": ""<XRController>{RightHand}/{TriggerButton}"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MoveDrone"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""binding"",
-                    ""id"": ""46870fe1-7f8f-4a0b-80d6-8839eaf45bf3"",
-                    ""path"": ""<XRController>{RightHand}/thumbstick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""MoveDrone"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
                 },
                 {
                     ""name"": ""One Modifier"",
@@ -545,6 +532,17 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""PlaceInfoBoard"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""72367e93-d9c2-4c9b-8da3-ca029d34e13b"",
+                    ""path"": ""<XRController>{LeftHand}/primary2DAxis"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LJoystick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -573,7 +571,8 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_LTouchToggle = m_Prototype.FindAction("LTouchToggle", throwIfNotFound: true);
         m_Prototype_RHandToggle = m_Prototype.FindAction("RHandToggle", throwIfNotFound: true);
         m_Prototype_RTouchToggle = m_Prototype.FindAction("RTouchToggle", throwIfNotFound: true);
-        m_Prototype_MoveDrone = m_Prototype.FindAction("MoveDrone", throwIfNotFound: true);
+        m_Prototype_LJoystick = m_Prototype.FindAction("LJoystick", throwIfNotFound: true);
+        m_Prototype_RJoystick = m_Prototype.FindAction("RJoystick", throwIfNotFound: true);
         m_Prototype_RecordButton = m_Prototype.FindAction("RecordButton", throwIfNotFound: true);
         m_Prototype_PlaceInfoBoard = m_Prototype.FindAction("PlaceInfoBoard", throwIfNotFound: true);
     }
@@ -799,7 +798,8 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_LTouchToggle;
     private readonly InputAction m_Prototype_RHandToggle;
     private readonly InputAction m_Prototype_RTouchToggle;
-    private readonly InputAction m_Prototype_MoveDrone;
+    private readonly InputAction m_Prototype_LJoystick;
+    private readonly InputAction m_Prototype_RJoystick;
     private readonly InputAction m_Prototype_RecordButton;
     private readonly InputAction m_Prototype_PlaceInfoBoard;
     public struct PrototypeActions
@@ -812,7 +812,8 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @LTouchToggle => m_Wrapper.m_Prototype_LTouchToggle;
         public InputAction @RHandToggle => m_Wrapper.m_Prototype_RHandToggle;
         public InputAction @RTouchToggle => m_Wrapper.m_Prototype_RTouchToggle;
-        public InputAction @MoveDrone => m_Wrapper.m_Prototype_MoveDrone;
+        public InputAction @LJoystick => m_Wrapper.m_Prototype_LJoystick;
+        public InputAction @RJoystick => m_Wrapper.m_Prototype_RJoystick;
         public InputAction @RecordButton => m_Wrapper.m_Prototype_RecordButton;
         public InputAction @PlaceInfoBoard => m_Wrapper.m_Prototype_PlaceInfoBoard;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
@@ -842,9 +843,12 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @RTouchToggle.started += instance.OnRTouchToggle;
             @RTouchToggle.performed += instance.OnRTouchToggle;
             @RTouchToggle.canceled += instance.OnRTouchToggle;
-            @MoveDrone.started += instance.OnMoveDrone;
-            @MoveDrone.performed += instance.OnMoveDrone;
-            @MoveDrone.canceled += instance.OnMoveDrone;
+            @LJoystick.started += instance.OnLJoystick;
+            @LJoystick.performed += instance.OnLJoystick;
+            @LJoystick.canceled += instance.OnLJoystick;
+            @RJoystick.started += instance.OnRJoystick;
+            @RJoystick.performed += instance.OnRJoystick;
+            @RJoystick.canceled += instance.OnRJoystick;
             @RecordButton.started += instance.OnRecordButton;
             @RecordButton.performed += instance.OnRecordButton;
             @RecordButton.canceled += instance.OnRecordButton;
@@ -873,9 +877,12 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @RTouchToggle.started -= instance.OnRTouchToggle;
             @RTouchToggle.performed -= instance.OnRTouchToggle;
             @RTouchToggle.canceled -= instance.OnRTouchToggle;
-            @MoveDrone.started -= instance.OnMoveDrone;
-            @MoveDrone.performed -= instance.OnMoveDrone;
-            @MoveDrone.canceled -= instance.OnMoveDrone;
+            @LJoystick.started -= instance.OnLJoystick;
+            @LJoystick.performed -= instance.OnLJoystick;
+            @LJoystick.canceled -= instance.OnLJoystick;
+            @RJoystick.started -= instance.OnRJoystick;
+            @RJoystick.performed -= instance.OnRJoystick;
+            @RJoystick.canceled -= instance.OnRJoystick;
             @RecordButton.started -= instance.OnRecordButton;
             @RecordButton.performed -= instance.OnRecordButton;
             @RecordButton.canceled -= instance.OnRecordButton;
@@ -923,7 +930,8 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnLTouchToggle(InputAction.CallbackContext context);
         void OnRHandToggle(InputAction.CallbackContext context);
         void OnRTouchToggle(InputAction.CallbackContext context);
-        void OnMoveDrone(InputAction.CallbackContext context);
+        void OnLJoystick(InputAction.CallbackContext context);
+        void OnRJoystick(InputAction.CallbackContext context);
         void OnRecordButton(InputAction.CallbackContext context);
         void OnPlaceInfoBoard(InputAction.CallbackContext context);
     }
