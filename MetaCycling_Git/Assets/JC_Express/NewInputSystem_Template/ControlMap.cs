@@ -376,6 +376,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Left_Grip"",
+                    ""type"": ""Button"",
+                    ""id"": ""ab1f5d8a-2e9b-478f-a382-5bb4a88237c4"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -543,6 +552,17 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""LJoystick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""82f87eea-1998-4424-83f1-d16103e9ff46"",
+                    ""path"": ""<XRController>{LeftHand}/{GripButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Left_Grip"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -575,6 +595,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_RJoystick = m_Prototype.FindAction("RJoystick", throwIfNotFound: true);
         m_Prototype_RecordButton = m_Prototype.FindAction("RecordButton", throwIfNotFound: true);
         m_Prototype_PlaceInfoBoard = m_Prototype.FindAction("PlaceInfoBoard", throwIfNotFound: true);
+        m_Prototype_Left_Grip = m_Prototype.FindAction("Left_Grip", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -802,6 +823,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_RJoystick;
     private readonly InputAction m_Prototype_RecordButton;
     private readonly InputAction m_Prototype_PlaceInfoBoard;
+    private readonly InputAction m_Prototype_Left_Grip;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -816,6 +838,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @RJoystick => m_Wrapper.m_Prototype_RJoystick;
         public InputAction @RecordButton => m_Wrapper.m_Prototype_RecordButton;
         public InputAction @PlaceInfoBoard => m_Wrapper.m_Prototype_PlaceInfoBoard;
+        public InputAction @Left_Grip => m_Wrapper.m_Prototype_Left_Grip;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -855,6 +878,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @PlaceInfoBoard.started += instance.OnPlaceInfoBoard;
             @PlaceInfoBoard.performed += instance.OnPlaceInfoBoard;
             @PlaceInfoBoard.canceled += instance.OnPlaceInfoBoard;
+            @Left_Grip.started += instance.OnLeft_Grip;
+            @Left_Grip.performed += instance.OnLeft_Grip;
+            @Left_Grip.canceled += instance.OnLeft_Grip;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -889,6 +915,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @PlaceInfoBoard.started -= instance.OnPlaceInfoBoard;
             @PlaceInfoBoard.performed -= instance.OnPlaceInfoBoard;
             @PlaceInfoBoard.canceled -= instance.OnPlaceInfoBoard;
+            @Left_Grip.started -= instance.OnLeft_Grip;
+            @Left_Grip.performed -= instance.OnLeft_Grip;
+            @Left_Grip.canceled -= instance.OnLeft_Grip;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -934,5 +963,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnRJoystick(InputAction.CallbackContext context);
         void OnRecordButton(InputAction.CallbackContext context);
         void OnPlaceInfoBoard(InputAction.CallbackContext context);
+        void OnLeft_Grip(InputAction.CallbackContext context);
     }
 }
