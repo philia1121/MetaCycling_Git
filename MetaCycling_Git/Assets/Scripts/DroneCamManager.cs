@@ -19,7 +19,7 @@ public class DroneCamManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector2 input = controlMap.Prototype.MoveDrone.ReadValue<Vector2>();
+        Vector2 input = controlMap.Prototype.RJoystick.ReadValue<Vector2>();
         if (input.sqrMagnitude < 0.01f) return;
 
         Vector3 cameraForward = mainCam.forward;

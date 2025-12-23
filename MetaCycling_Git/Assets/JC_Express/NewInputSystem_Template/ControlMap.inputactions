@@ -320,7 +320,16 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "MoveDrone",
+                    "name": "LJoystick",
+                    "type": "Value",
+                    "id": "ee0f1d77-81b7-43dd-8ed9-00cc3a2c44e0",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "RJoystick",
                     "type": "Value",
                     "id": "3e908f4e-d8ab-4aa5-a2a2-65189ffa59cd",
                     "expectedControlType": "Vector2",
@@ -341,6 +350,15 @@
                     "name": "PlaceInfoBoard",
                     "type": "Button",
                     "id": "c7dbe4b6-44c8-4ada-bba0-ecaad32d574b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Left_Grip",
+                    "type": "Button",
+                    "id": "ab1f5d8a-2e9b-478f-a382-5bb4a88237c4",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -415,37 +433,15 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "One Modifier",
-                    "id": "7a981f62-128a-441d-a264-a6d1fcab4052",
-                    "path": "OneModifier",
+                    "name": "",
+                    "id": "143ad251-106c-4ffa-b785-627d68f2a070",
+                    "path": "<XRController>{RightHand}/primary2DAxis",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "MoveDrone",
-                    "isComposite": true,
+                    "action": "RJoystick",
+                    "isComposite": false,
                     "isPartOfComposite": false
-                },
-                {
-                    "name": "modifier",
-                    "id": "3c1b17b0-7370-49f1-bef6-49af9dcecf6a",
-                    "path": "<XRController>{RightHand}/{TriggerButton}",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "MoveDrone",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "binding",
-                    "id": "46870fe1-7f8f-4a0b-80d6-8839eaf45bf3",
-                    "path": "<XRController>{RightHand}/thumbstick",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "MoveDrone",
-                    "isComposite": false,
-                    "isPartOfComposite": true
                 },
                 {
                     "name": "One Modifier",
@@ -523,6 +519,28 @@
                     "action": "PlaceInfoBoard",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "72367e93-d9c2-4c9b-8da3-ca029d34e13b",
+                    "path": "<XRController>{LeftHand}/primary2DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LJoystick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "82f87eea-1998-4424-83f1-d16103e9ff46",
+                    "path": "<XRController>{LeftHand}/{GripButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Left_Grip",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }
