@@ -24,15 +24,7 @@ public class TriggerBlockFollow : MonoBehaviour
 
     void Update()
     {
-        if (controlMap.Prototype.Left_Grip.WasPressedThisFrame())
-        {
-            isHolding = true;
-            MoveItemInFront();
-        }
-        if (controlMap.Prototype.Left_Grip.WasReleasedThisFrame())
-        {
-            isHolding = false;
-        }
+        isHolding = controlMap.Prototype.Left_Grip.IsPressed(); // this will do
         if (isHolding)
         {
             MoveItemInFront();
@@ -44,5 +36,6 @@ public class TriggerBlockFollow : MonoBehaviour
         itemObj.transform.position =
             playerHead.transform.position +
             playerHead.transform.forward * itemDist;
+        itemObj.transform.rotation = playerHead.transform.rotation; // also force the panel to face toward player
     }
 }

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using UnityEngine.InputSystem;
-using UnityEditor.SceneManagement;
 public class TrajectoryRecorder : MonoBehaviour
 {
     public float recordInterval = 0.015f;
     public bool isRecording = false;
+    public Material mat;
     private TrajectorySession currentSession;
     private float startTime;
     ControlMap controlMap;
@@ -32,6 +32,7 @@ public class TrajectoryRecorder : MonoBehaviour
         isRecording = !isRecording;
         if (isRecording)
         {
+            if (mat) mat.color = Color.red;
             StartNewSession();
             if (cor != null) StopCoroutine(cor);
             cor = StartCoroutine(RecordRoutine());
@@ -39,6 +40,7 @@ public class TrajectoryRecorder : MonoBehaviour
         }
         else
         {
+            if (mat) mat.color = Color.white;
             if (cor != null) StopCoroutine(cor);
             SaveToFile();
             Debug.Log("stop recording");
