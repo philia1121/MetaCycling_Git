@@ -7,40 +7,52 @@ public class RBVelocityReader : MonoBehaviour
 {
     [Header("Target")]
     [SerializeField] private GameObject target;
-    public Vector3 Velocity { get; private set; }                   //setting this public so its easily viewable
+    public Vector3 velocity { get; private set; }                   //setting this public so its easily viewable
+    public Vector3 acceleration { get; private set; }                   //setting this public so its easily viewable
+    private Vector3 smoothedVelocity;
 
     [Header("Graph Settings")]
     [SerializeField] private int maxSamples = 30;
     [SerializeField] private float maxVelocity = 20f;               //expected max velocity
-    [SerializeField] private GameObject canvastGameObj;             //canvas GameObject
+    [SerializeField] private float maxAccel = 5f;                  //expected max acceleration
+
+    [Header("Velocity Line Renderer")]
+    [SerializeField] private AxisGraph lineRendererVelocityX;
+    [SerializeField] private AxisGraph lineRendererVelocityY;
+    [SerializeField] private AxisGraph lineRendererVelocityZ;
     
-    //store canvas values 
-    private RectTransform canvasRect;     
-    private float graphHeight;
-    private float graphWidth;      
+    [Header("Acceleration Line Renderer")]
+    [SerializeField] private AxisGraph lineRendererAccelX;
+    [SerializeField] private AxisGraph lineRendererAccelY;
+    [SerializeField] private AxisGraph lineRendererAccelZ;   
 
     [Header("Sampling")]
     [SerializeField] private float sampleInterval = 0.02f;          //roughly almost the same as FixedUpdate
+    [SerializeField] private float velocitySmoothing = 0.15f;
 
-    //sampling variables
-    private UILineRenderer lineRenderer;
-    private float[] samples;
+    //sampling variables                
+    private Vector3[] velocitySamples;                              //save the velocity samples for drawing
+    private Vector3[] accelerationSamples;                          //save the accel samples for drawing
     private int sampleIndex;
-    private Vector3 lastPos;
 
-    private Coroutine samplingRoutine;                              //coroutine to make it easier to control outside the script
+    private Vector3 lastPos;
+    private Vector3 lastVelocity;
     private bool hasLast = true;                                    //please call this if it losses track
 
+    private Coroutine samplingRoutine;                              //coroutine to make it easier to control outside the script
     void Awake()
     {
-        //get canvas width and height
-        canvasRect = canvastGameObj.GetComponent<RectTransform>();
-        graphWidth = canvasRect.sizeDelta.x;
-        graphHeight = canvasRect.sizeDelta.y;
+        CacheRect(lineRendererVelocityX);
+        CacheRect(lineRendererVelocityY);
+        CacheRect(lineRendererVelocityZ);
+
+        CacheRect(lineRendererAccelX);
+        CacheRect(lineRendererAccelY);
+        CacheRect(lineRendererAccelZ);
 
         //setup the required vars for UILineRenderer
-        lineRenderer = canvastGameObj.GetComponent<UILineRenderer>();
-        samples = new float[maxSamples];
+        velocitySamples = new Vector3[maxSamples];
+        accelerationSamples = new Vector3[maxSamples];
     }
 
     private void Start()
@@ -55,7 +67,7 @@ public class RBVelocityReader : MonoBehaviour
         if (samplingRoutine != null)
             return;
 
-        samplingRoutine = StartCoroutine(SampleVelocity());
+        samplingRoutine = StartCoroutine(SampleMotion());
     }
 
     public void StopGraph()
@@ -67,15 +79,6 @@ public class RBVelocityReader : MonoBehaviour
         samplingRoutine = null;
     }
 
-    public void ClearGraph()
-    {
-        for (int i = 0; i < samples.Length; i++)
-            samples[i] = 0f;
-
-        sampleIndex = 0;
-        UpdateGraph();
-    }
-
     public void UpdateControllerInfo(bool _b)
     {
         hasLast = _b;
@@ -83,7 +86,7 @@ public class RBVelocityReader : MonoBehaviour
 
     #endregion
 
-    IEnumerator SampleVelocity()
+    IEnumerator SampleMotion()
     {
         float lastSampleTime = Time.time;
 
@@ -100,18 +103,27 @@ public class RBVelocityReader : MonoBehaviour
                 if (!hasLast)
                 {
                     lastPos = currPos;
+                    lastVelocity = Vector3.zero;
+                    smoothedVelocity = Vector3.zero;
                     hasLast = true;
-                    Velocity = Vector3.zero;
                 }
                 else if (deltaTime > 0f)
                 {
-                    Velocity = (currPos - lastPos) / deltaTime;
+                    Vector3 rawVelocity = (currPos - lastPos) / deltaTime;
+                    smoothedVelocity = Vector3.Lerp(smoothedVelocity, rawVelocity, velocitySmoothing);
+
+                    acceleration = (smoothedVelocity - lastVelocity) / deltaTime;
+
+                    lastVelocity = smoothedVelocity;
+                    velocity = smoothedVelocity;
                     lastPos = currPos;
 
-                    samples[sampleIndex] = Velocity.magnitude;
+                    velocitySamples[sampleIndex] = velocity;
+                    accelerationSamples[sampleIndex] = acceleration;
+
                     sampleIndex = (sampleIndex + 1) % maxSamples;
 
-                    UpdateGraph();
+                    DrawAllGraphs();
                 }
             }
 
@@ -119,25 +131,58 @@ public class RBVelocityReader : MonoBehaviour
         }
     }
 
-    void UpdateGraph()
+    #region Visualization
+
+    void DrawAllGraphs()
     {
+        DrawAxisGraph(lineRendererVelocityX, velocitySamples, v => v.x, maxVelocity);
+        DrawAxisGraph(lineRendererVelocityY, velocitySamples, v => v.y, maxVelocity);
+        DrawAxisGraph(lineRendererVelocityZ, velocitySamples, v => v.z, maxVelocity);
+
+        DrawAxisGraph(lineRendererAccelX, accelerationSamples, a => a.x, maxAccel);
+        DrawAxisGraph(lineRendererAccelY, accelerationSamples, a => a.y, maxAccel);
+        DrawAxisGraph(lineRendererAccelZ, accelerationSamples, a => a.z, maxAccel);
+    }
+
+    void DrawAxisGraph(
+        AxisGraph _axis,
+        Vector3[] source,
+        System.Func<Vector3, float> selector,
+        float maxValue)
+    {
+
         Vector2[] points = new Vector2[maxSamples];
-        float xStep = graphWidth / (maxSamples - 1);
+        float xStep = _axis.rect.sizeDelta.x / (maxSamples - 1);
 
         for (int i = 0; i < maxSamples; i++)
         {
             int index = (sampleIndex + i) % maxSamples;
-            float value = samples[index];
+            float value = selector(source[index]);
 
-            float normalized = Mathf.Clamp01(value / maxVelocity);
-            float y = normalized * graphHeight;
+            float normalized = Mathf.InverseLerp(-maxValue, maxValue, value);
+            float y = normalized * _axis.rect.sizeDelta.y;
 
             points[i] = new Vector2(i * xStep, y);
         }
 
-        //redraw line renderer use setverticesdirty so its a little bit lighter
-        lineRenderer.points = points;
-        lineRenderer.SetVerticesDirty();
+        _axis.line.points = points;
+        _axis.line.SetVerticesDirty();
+    }
+
+    #endregion
+
+    public void CacheRect(AxisGraph g)
+    {
+        if (g.line != null)
+        {
+            g.rect = g.line.gameObject.GetComponent<RectTransform>();
+        }
     }
 }
 
+[System.Serializable]
+public class AxisGraph
+{
+    public UILineRenderer line;
+    [HideInInspector] public RectTransform rect;
+}
