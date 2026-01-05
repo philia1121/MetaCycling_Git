@@ -11,10 +11,12 @@ public class MotionReplay : MonoBehaviour
     public string fileName = "MultiTraj_20251212_161936.json";
 
     [Header("GameObject Refs")]
+    public Transform ReplayRoot_Transform;
     public Transform HMD_Transform;
     public Transform RCont_Transform, LCont_Transform, RHand_Transform, LHand_Transform;
 
     [Header("Play Settings")]
+    public bool autoRecenter;
     public bool isPlaying = false;
     public float playbackSpeed = 1.0f;
 
@@ -57,7 +59,8 @@ public class MotionReplay : MonoBehaviour
 
     void LoadAndParseJSON()
     {
-        string fullPath = Path.Combine(folderPath, fileName + ".json");
+        fileName += fileName.EndsWith(".json") ? "" : ".json";
+        string fullPath = Path.Combine(folderPath, fileName);
 
         if (File.Exists(fullPath))
         {
@@ -66,6 +69,11 @@ public class MotionReplay : MonoBehaviour
                 string jsonContent = File.ReadAllText(fullPath);
                 logData = JsonUtility.FromJson<TrajectorySession>(jsonContent);
                 Debug.Log($"成功讀取 Log，共 {logData.waypoints.Count} 筆數據。");
+
+                if (autoRecenter)
+                {
+                    AlignToOrigin();
+                }
 
                 currentTime = 0;
                 currentIndex = 0;
@@ -113,5 +121,14 @@ public class MotionReplay : MonoBehaviour
             LHand_Transform.localPosition = data.pos_LHand;
             LHand_Transform.localEulerAngles = data.rot_LHand;
         }
+    }
+    void AlignToOrigin()
+    {
+        if (logData.waypoints.Count == 0 || ReplayRoot_Transform == null) return;
+
+        Vector3 startEuler = logData.waypoints[0].rot_HMD;
+        float startYaw = startEuler.y;
+
+        ReplayRoot_Transform.rotation = Quaternion.Euler(0, -startYaw, 0);
     }
 }
