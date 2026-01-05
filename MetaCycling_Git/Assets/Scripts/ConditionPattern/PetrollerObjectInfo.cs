@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -10,7 +9,7 @@ public class PetrollerObjectInfo : MonoBehaviour
     ControlMap controlMap;
     [SerializeField] private bool useOVRInput = true;
 
-    // For Debug
+    // For Debug //
     public bool showDebug;
     public Material my_mat;
     public GameObject[] dirArrows;
@@ -19,22 +18,15 @@ public class PetrollerObjectInfo : MonoBehaviour
     [SerializeField] private CoordsType logCoords = CoordsType.World;
     public Transform PetrollerTransform;
 
-    // Joystick and Button
+    // Joystick and Button // 
     public Vector2 JoystickRead { get; private set; }
-    public enum JoystickDir
-    {
-        Origin,
-        Ear,
-        Tail,
-        LeftHand,
-        RightHand
-    }
+    public enum JoystickDir { Origin, Ear, Tail, LeftHand, RightHand }
     public JoystickDir CurrentJoystickDir { get; private set; } = JoystickDir.Origin;
     public bool VerticalPress { get; private set; }
     public bool HorizontalPress { get; private set; }
 
-    // Controller Motion
-    // Velocity
+    // Controller Motion //
+    // Velocity // 
     public Vector3 Velocity { get; private set; }
     public Vector3 PetrollerRelativeVelocity { get; private set; }
     [SerializeField] private float speedThreshold = 0.75f; //0.75f
@@ -43,7 +35,8 @@ public class PetrollerObjectInfo : MonoBehaviour
     public bool IsMoving { get; private set; } = false;
     public Vector3 WorldMoveDirection { get; private set; } = Vector3.zero;
     public Vector3 PetrollerRelativeMoveDirection { get; private set; } = Vector3.zero;
-    // AngularVelocity
+
+    // AngularVelocity //
     public Vector3 AngularVelocity { get; private set; }
     public Vector3 PetrollerRelativeAngularVelocity { get; private set; } = Vector3.zero;
     [SerializeField] private float rotateSpeedThreshold = 1f; //1f
@@ -57,22 +50,22 @@ public class PetrollerObjectInfo : MonoBehaviour
     private Vector3 oldAngularVelocity;
     private Vector3 oldVelocity;
 
-    // Tracking State
-    OVRInput.Controller controller = OVRInput.Controller.RTouch;
+    // Impact //
+    public int LastImpactFrame { get; private set; } = -1;
+    public float LastImpactSpeed { get; private set; } = 0f;
+    public string LastImpactZoneID { get; private set; } = "";
+
+    // Tracking State //
+    [SerializeField] private OVRInput.Controller controller = OVRInput.Controller.RTouch;
     public enum TrackingStatus
-    {
-        Tracked,
-        PresumptiveLostTracked,
-        LostTracked
-    }
-    public TrackingStatus CurrentTrackingState { get; private set; } = TrackingStatus.Tracked;
-    bool presumptiveTracked = false;
-    public enum ControllerPairing
-    {
-        Connected,
-        Disconnected
-    }
+    { Tracked, PresumptiveLostTracked, LostTracked }
+    public TrackingStatus CurrentTrackingState = TrackingStatus.Tracked;
+    bool presumptiveTracked = true;
+    public enum ControllerPairing { Connected, Disconnected }
     public ControllerPairing CurrentControllerConnection { get; private set; } = ControllerPairing.Connected;
+
+    // Tracking Zone //
+    private HashSet<string> currentZoneIDs = new HashSet<string>();
 
     void Awake()
     {
@@ -312,8 +305,16 @@ public class PetrollerObjectInfo : MonoBehaviour
     {
         return (currentValue - oldValue) / time;
     }
-    public void ChangePresumptiveTrackingState(bool isTracked)
+
+    // Extension Function //
+    public void ChangePresumptiveTrackingState(bool tracked) { presumptiveTracked = tracked; }
+    public void AddZoneID(string zoneID) { currentZoneIDs.Add(zoneID); }
+    public void RemoveZoneID(string zoneID) { currentZoneIDs.Remove(zoneID); }
+    public bool IsInZone(string zoneID) { return currentZoneIDs.Contains(zoneID); }
+    public void UpdateSlapInfo(int frame, string id)
     {
-        presumptiveTracked = isTracked;
+        LastImpactFrame = frame;
+        LastImpactSpeed = Speed;
+        LastImpactZoneID = id;
     }
 }
