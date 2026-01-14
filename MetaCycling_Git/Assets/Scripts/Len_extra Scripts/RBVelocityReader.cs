@@ -8,12 +8,12 @@ public class RBVelocityReader : MonoBehaviour
     [Header("Target")]
     [SerializeField] private GameObject target;
     public Vector3 velocity { get; private set; }                   //setting this public so its easily viewable
-    public Vector3 acceleration { get; private set; }                   //setting this public so its easily viewable
+    public Vector3 acceleration { get; private set; }               //setting this public so its easily viewable
     private Vector3 smoothedVelocity;
 
     [Header("Graph Settings")]
     [SerializeField] private int maxSamples = 30;
-    [SerializeField] private float maxVelocity = 20f;               //expected max velocity
+    [SerializeField] private float maxVelocity = 20f;              //expected max velocity
     [SerializeField] private float maxAccel = 5f;                  //expected max acceleration
 
     [Header("Velocity Line Renderer")]
@@ -42,6 +42,7 @@ public class RBVelocityReader : MonoBehaviour
     private Coroutine samplingRoutine;                              //coroutine to make it easier to control outside the script
     void Awake()
     {
+        //basically save variable
         CacheRect(lineRendererVelocityX);
         CacheRect(lineRendererVelocityY);
         CacheRect(lineRendererVelocityZ);
