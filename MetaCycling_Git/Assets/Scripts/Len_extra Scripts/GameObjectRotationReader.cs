@@ -25,6 +25,17 @@ public class GameObjectRotationReader : MonoBehaviour
         rotZ.SetFillamount(accumulatedZ);
     }
 
+    private void ResetStartingRotation()
+    {
+        rotX.SetDeviationValue(accumulatedX);
+        rotY.SetDeviationValue(accumulatedY);
+        rotZ.SetDeviationValue(accumulatedZ);
+
+        accumulatedX = 0;
+        accumulatedY = 0;
+        accumulatedZ = 0;
+    }
+
     private void CalcEditorRotation()
     {
         Quaternion current = target.transform.rotation;
