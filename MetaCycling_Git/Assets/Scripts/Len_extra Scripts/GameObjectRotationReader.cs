@@ -14,17 +14,18 @@ public class GameObjectRotationReader : MonoBehaviour
 
     private Quaternion lastRotation;
     private float accumulatedX, accumulatedY, accumulatedZ;
-    private void Update()
+    private void FixedUpdate()
     {
         if(target == null)
             return;
         CalcEditorRotation();
-
+    }
+    private void Update()
+    {
         rotX.SetFillamount(accumulatedX);
         rotY.SetFillamount(accumulatedY);
         rotZ.SetFillamount(accumulatedZ);
     }
-
     private void ResetStartingRotation()
     {
         rotX.SetDeviationValue(accumulatedX);
