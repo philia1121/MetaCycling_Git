@@ -8,9 +8,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Main Scene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MetaCyclingTest.unity
     guid: b1c50c41f1e295f48845885d2099533d
+  - enabled: 1
+    path: Assets/Scenes/MetaCyclingJC.unity
+    guid: f6486b3f7144dfa4f911ffe739a20f21
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: ca2d434dac20a8e4c991e3fead97aff4, type: 2}
     Unity.XR.OpenVR.Settings: {fileID: 11400000, guid: 042fdfd724536ce4a8eb00d0a10cc6a7, type: 2}
