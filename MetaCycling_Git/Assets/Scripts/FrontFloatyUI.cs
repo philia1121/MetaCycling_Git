@@ -6,28 +6,37 @@ public class FrontFloatyUI : MonoBehaviour
 {
     [Header("Camera Following")]
     public Transform vrCamera;
-    public float distance = 2.0f;
-    public float smoothSpeed = 2.0f;
-    public float updateInterval = 10f;
+    public float distance = 1.5f;
+    public float smoothSpeed = 3.0f;
+    public float updateInterval = 1.5f;
+    public Vector3 offset;
     Vector3 targetPosition;
-    Quaternion targetRotation;
 
-    // Start is called before the first frame update
-    void Start()
+    Coroutine updateCoroutine;
+
+    void Awake()
     {
         if (vrCamera == null)
             vrCamera = Camera.main.transform;
-
-        UpdateTargetTransform();
-        transform.position = targetPosition;
-        transform.rotation = targetRotation;
-        StartCoroutine(UpdatePositionTimer());
     }
-
-    // Update is called once per frame
+    void OnEnable()
+    {
+        UpdateTargetTransform();
+        transform.position = targetPosition + offset;
+        if (updateCoroutine != null) StopCoroutine(updateCoroutine);
+        updateCoroutine = StartCoroutine(UpdatePositionTimer());
+    }
+    void OnDisable()
+    {
+        if (updateCoroutine != null)
+        {
+            StopCoroutine(updateCoroutine);
+            updateCoroutine = null;
+        }
+    }
     void Update()
     {
-        transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * smoothSpeed);
+        transform.position = Vector3.Lerp(transform.position, targetPosition + offset, Time.deltaTime * smoothSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.position - vrCamera.position), Time.deltaTime * smoothSpeed);
     }
     IEnumerator UpdatePositionTimer()
@@ -41,6 +50,5 @@ public class FrontFloatyUI : MonoBehaviour
     void UpdateTargetTransform()
     {
         targetPosition = vrCamera.position + (vrCamera.forward * distance);
-        targetRotation = Quaternion.LookRotation(transform.position - vrCamera.position);
     }
 }

@@ -21,13 +21,11 @@ public class MotionManager : MonoBehaviour
     private bool hasMovedAway = false;
     public bool autoEndRecord = true;
     private float recordStartTime;
-
     [Header("幽靈回放設置")]
     public Transform ghostModel;       // 拖入幽靈手把模型
     public bool loopPlayback = true;   // 是否循環播放
     private float playbackTimer = 0f;  // 播放計時器
     private float totalPathDuration = 0f; // 標準路徑總時長
-
     [Header("金幣遊戲設置")]
     public bool coinGame;
     public GameObject coinPrefab;      // 金幣 Prefab
