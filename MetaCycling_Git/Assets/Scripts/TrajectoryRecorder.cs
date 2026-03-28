@@ -46,29 +46,6 @@ public class TrajectoryRecorder : MonoBehaviour
             Debug.Log("stop recording");
         }
     }
-    public void StartRecording()
-    {
-        if (!isRecording)
-        {
-            isRecording = !isRecording;
-            if (mat) mat.color = Color.red;
-            StartNewSession();
-            if (cor != null) StopCoroutine(cor);
-            cor = StartCoroutine(RecordRoutine());
-            Debug.Log("start recording");
-        }
-    }
-    public void StopRecording()
-    {
-        if (isRecording)
-        {
-            isRecording = !isRecording;
-            if (mat) mat.color = Color.white;
-            if (cor != null) StopCoroutine(cor);
-            SaveToFile();
-            Debug.Log("stop recording");
-        }
-    }
     IEnumerator RecordRoutine()
     {
         while (isRecording)
