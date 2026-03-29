@@ -14,8 +14,15 @@ public class TrajectoryRecorder : MonoBehaviour
     Transform VRMainCam;
     public TrackingInfo trackingInfo;
     Coroutine cor;
+
+    //added for making this into singleton
+    public static TrajectoryRecorder instance;
+
     void Awake()
     {
+        if (instance == null)
+            instance = this;
+
         controlMap = new ControlMap();
         VRMainCam = Camera.main.transform;
         trackingInfo = FindFirstObjectByType<TrackingInfo>();
@@ -46,6 +53,31 @@ public class TrajectoryRecorder : MonoBehaviour
             Debug.Log("stop recording");
         }
     }
+
+    public void StartRecording()
+    {
+        if (!isRecording)
+        {
+            isRecording = !isRecording;
+            if (mat) mat.color = Color.red;
+            StartNewSession();
+            if (cor != null) StopCoroutine(cor);
+            cor = StartCoroutine(RecordRoutine());
+            Debug.Log("start recording");
+        }
+    }
+    public void StopRecording()
+    {
+        if (isRecording)
+        {
+            isRecording = !isRecording;
+            if (mat) mat.color = Color.white;
+            if (cor != null) StopCoroutine(cor);
+            SaveToFile();
+            Debug.Log("stop recording");
+        }
+    }
+
     IEnumerator RecordRoutine()
     {
         while (isRecording)

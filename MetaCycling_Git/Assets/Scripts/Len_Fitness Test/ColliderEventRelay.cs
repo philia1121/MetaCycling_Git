@@ -6,12 +6,15 @@ using UnityEngine.Events;
 
 public class ColliderEventRelay : MonoBehaviour
 {
-    public event Action<GameObject> OnObjHit;
+    public event Action<GameObject, bool> OnObjHit;
+    public bool isDestroyable;
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("FitnessTrackedObj"))
         {
-            OnObjHit?.Invoke(this.gameObject);
+            Debug.Log("hit");
+            OnObjHit?.Invoke(this.gameObject, isDestroyable);
         }
     }
 }

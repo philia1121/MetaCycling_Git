@@ -10,9 +10,10 @@ using UnityEngine;
 public class FitnessTestManager : MonoBehaviour
 {
     [Header("Tracked Obj data")]
+    [SerializeField] private GameObject trackedGameObject;
+
     [SerializeField] private GameObject hmdGameObject;
     [SerializeField] private GameObject rightArmGameObject;
-    [SerializeField] private GameObject trackedGameObject;
     [SerializeField] private float toleranceDist = 0.05f;               //max distance the user can be from the established points
     private SphereCollider hmdColl;
 
@@ -47,8 +48,7 @@ public class FitnessTestManager : MonoBehaviour
     //var for the tracked GO
     private Vector3 lastTrackedPos;
     private bool isRecording = false;
-    private bool hasStarted = false;
-    private bool hasEnded = false;
+    private bool isLastHitStart;
     private int point;
     private int exerciseCount;
 
@@ -64,12 +64,17 @@ public class FitnessTestManager : MonoBehaviour
     private Vector3 calibratedStartPos;
     private Vector3 calibratedEndPos;
 
+    TrajectoryRecorder trajectoryRecorder;
+
     ControlMap controlMap;
     void Awake()
     {
+        trajectoryRecorder = TrajectoryRecorder.instance;
+
         controlMap = new ControlMap();
         controlMap.Prototype.Enable();
 
+        #region jump dist buttons and calc
         //spawn the planes n calc
         controlMap.Prototype.Right_Trigger.started += ctx => 
         {
@@ -121,10 +126,40 @@ public class FitnessTestManager : MonoBehaviour
             etcTxt.text = $"measured dist is {dist * 100} cm";
         };
 
+        //end jump
+        controlMap.Prototype.X.started += ctx => {
+            jumpedPos = Vector3.zero;
+            jumpedPos = trackedGameObject.transform.position;
+
+            if (spawnedEndJumpPoint == null)
+                spawnedEndJumpPoint = Instantiate(pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
+            else
+                spawnedEndJumpPoint.transform.position = new Vector3(jumpedPos.x, 0, jumpedPos.z);
+
+            float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
+
+            float highestPoint = 0;
+            //float lowestPoint = 0;
+            foreach (var point in moveSamples)
+            {
+                if (point.position.y > highestPoint)
+                    highestPoint = point.position.y;
+            }
+
+            jumpTxt.text = $"jumped {res * 100} cm, highest {(highestPoint - calibratedStartPos.y) * 100} cm";
+
+            //if still recording, end it
+            if (isRecording)
+                Record(false);
+        };
+
+        #endregion
+
+
         //swap tracking
         controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
 
-        //start to record, determine start
+        //determine start, then start to record
         controlMap.Prototype.A.started += ctx => StartCoroutine(CalibratePos(result =>
         {
             ClearTrackingData();
@@ -149,40 +184,18 @@ public class FitnessTestManager : MonoBehaviour
             };
 
             moveSamples.Add(point);
+            Record(true);
+
+            trajectoryRecorder.StartRecording();
             //basically call the function to record the movement,
             //so the track can be calc'd after the start point is calibrated
         }));
 
+        //record manually
         controlMap.Prototype.B.started += ctx => {
             Record(true);
+            
             //maybe put the end record thing here, need to discuss
-        };
-
-        //end jump
-        controlMap.Prototype.X.started += ctx => {
-            jumpedPos = Vector3.zero;
-            jumpedPos = trackedGameObject.transform.position;
-
-            if (spawnedEndJumpPoint == null)
-                spawnedEndJumpPoint = Instantiate(pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
-            else
-                spawnedEndJumpPoint.transform.position = new Vector3(jumpedPos.x, 0, jumpedPos.z);
-
-            float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
-
-            float highestPoint = 0;
-            //float lowestPoint = 0;
-            foreach(var point in moveSamples)
-            {
-                if(point.position.y > highestPoint)
-                    highestPoint = point.position.y;
-            }
-
-            jumpTxt.text = $"jumped {res * 100} cm, highest {(highestPoint - calibratedStartPos.y) * 100} cm";
-
-            //if still recording, end it
-            if (isRecording)
-                Record(false);
         };
 
         //record end pos
@@ -192,7 +205,6 @@ public class FitnessTestManager : MonoBehaviour
             etcTxt.text = $"head to arm = {Mathf.Abs(dist) * 100} cm";
         };
 
-
         controlMap.Prototype.Left_Grip.started += ctx => ClearTrackingData();
     }
 
@@ -201,6 +213,45 @@ public class FitnessTestManager : MonoBehaviour
         hmdColl = trackedGameObject.GetComponent<SphereCollider>();
         if( hmdColl != null )
             hmdColl.radius = toleranceDist;
+    }
+
+    private void Update()
+    {
+        if (isRecording)
+        {
+            RecordMovement();
+        }
+
+        startTxt.text = $"start pos{(calibratedStartPos == Vector3.zero ? "<b> not </b>" : " ")}set";
+        endTxt.text = $"end pos{(calibratedEndPos == Vector3.zero ? "<b> not </b>" : " ")}set";
+
+        if (calibratedStartPos == Vector3.zero || calibratedEndPos == Vector3.zero)
+            return;
+
+        #region 2 points of movement logic
+
+        Vector3 currPos = trackedGameObject.transform.position;
+
+        if (calibratedStartPos == Vector3.zero || calibratedEndPos == Vector3.zero)
+            return;
+
+        float minDist = .05f;
+        jumpTxt.text = $"toStr {Mathf.Abs(CalcDist(currPos, calibratedStartPos))}, toEd {Mathf.Abs(CalcDist(currPos, calibratedEndPos))}, {minDist}";
+
+        if (!isLastHitStart && Mathf.Abs(CalcDist(currPos, calibratedStartPos)) <= minDist)
+        {
+            isLastHitStart = true;
+            //etcTxt.text = $"hits start";
+            CalcScore();
+        }
+
+        if (isLastHitStart && Mathf.Abs(CalcDist(currPos, calibratedEndPos)) <= minDist)
+        {
+            isLastHitStart= false;
+            //etcTxt.text = $"hits end";
+            CalcScore();
+        }
+        #endregion;
     }
 
     private void Record(bool spawnEndPoint)
@@ -243,53 +294,26 @@ public class FitnessTestManager : MonoBehaviour
 
             moveSamples.Add(point);
 
+            //this is to enable the rep counting
+            isLastHitStart = true;
+
             InstantiatePoints();
-
-            CalcScore();
-
         }));
+
+        trajectoryRecorder.StopRecording();
+
     }
     private void SwapTracked()
     {
         trackedGameObject = trackedGameObject == hmdGameObject
             ? rightArmGameObject
             : hmdGameObject;
-        etcTxt.text = $"Tracking: {(trackedGameObject == hmdGameObject ? "head" : "right hand")}";
+        etcTxt.text = $"Tracking: {(trackedGameObject == hmdGameObject ? "head" : "right hand")}, tag: {trackedGameObject.tag}";
 
         trackedGameObject.transform.localScale = new Vector3(toleranceDist, toleranceDist, toleranceDist);
-        hmdColl = trackedGameObject.GetComponent<SphereCollider>();
-        hmdColl.radius = toleranceDist;
-    }
+        SphereCollider c = trackedGameObject.GetComponent<SphereCollider>();
+        c.radius = toleranceDist;
 
-    private void Update()
-    {
-        if (isRecording)
-        {
-            RecordMovement();
-        }
-
-        startTxt.text = $"start pos{(calibratedStartPos == Vector3.zero ? "<b> not </b>" : " ")}set";
-        endTxt.text = $"end pos{(calibratedEndPos == Vector3.zero ? "<b> not </b>" : " ")}set";
-
-        if (calibratedStartPos == Vector3.zero || calibratedEndPos == Vector3.zero)
-            return;
-
-        #region 2 points of movement logic
-
-        Vector3 currPos = trackedGameObject.transform.position;
-
-        if (calibratedStartPos == Vector3.zero || calibratedEndPos == Vector3.zero)
-            return;
-        if (Mathf.Abs(CalcDist(currPos, calibratedStartPos)) <= toleranceDist)
-        {
-            CalcScore();
-        }
-
-        if (Mathf.Abs(CalcDist(currPos, calibratedEndPos)) <= toleranceDist)
-        {
-            CalcScore();
-        }
-        #endregion;
     }
 
     public IEnumerator CalibratePos(Action<Vector3> callback)
@@ -337,7 +361,7 @@ public class FitnessTestManager : MonoBehaviour
     {
         //save to list if the position changes around 2-3 cm
         Vector3 currentPos = trackedGameObject.transform.position;
-        if ((currentPos - lastTrackedPos).sqrMagnitude < fitnessSampleDistance * fitnessSampleDistance)
+        if (MathF.Abs(CalcDist(currentPos, lastTrackedPos)) < fitnessSampleDistance)
             return;
 
         MotionPoint point = new MotionPoint
@@ -356,12 +380,12 @@ public class FitnessTestManager : MonoBehaviour
     {
         int ptCount = 0;
         //instantiate the points
-        foreach(var point in moveSamples)
+        foreach (var point in moveSamples)
         {
             GameObject g = null;
-            if(ptCount==0)
+            if (ptCount == 0)
                 g = Instantiate(pointPrefabStart, point.position, point.rotation);
-            else if (ptCount == moveSamples.Count - 1) 
+            else if (ptCount == moveSamples.Count - 1)
                 g = Instantiate(pointPrefabEnd, point.position, point.rotation);
             else
                 g = Instantiate(pointPrefab, point.position, point.rotation);
@@ -378,33 +402,41 @@ public class FitnessTestManager : MonoBehaviour
                 ptCount++;
             }
         }
+
+        etcTxt.text = $"spawned {ptCount} balls";
     }
 
     //adds point, disables the point
-    private void OnPointHit(GameObject obj)
+
+    private void OnPointHit(GameObject obj, bool isDestroyable)
     {
         point++;
 
-        ptsTxt.text = $"point: {point}/{moveSamples.Count}";
+        //etcTxt.text = $"point: {point}/{moveSamples.Count}";
 
+        if (!isDestroyable)
+            return;
         obj.SetActive(false);
     }
 
     private void CalcScore()
     {
-        if (point / moveSamples.Count >= fitnessSampledCompletionRate)
+        float ratio = (float)point / instantiatedObj.Count;
+
+        if (ratio >= fitnessSampledCompletionRate)
             exerciseCount++;
 
+        //etcTxt.text = $"{instantiatedObj.Count}, {point} / {instantiatedObj.Count}, {ratio} >= {fitnessSampledCompletionRate}, {(ratio >= fitnessSampledCompletionRate ? "add" : "not")}";
         point = 0;
 
         //reactivate em all
         foreach (var obj in instantiatedObj)
         {
-            if(!obj.activeSelf)
+            if (!obj.activeSelf)
                 obj.SetActive(true);
         }
 
-        etcTxt.text = $"did {exerciseCount/2} reps";
+        etcTxt.text = $"did {exerciseCount%2} reps";
     }
 
     private float CalcDist(Vector3 start, Vector3 end)
@@ -425,9 +457,12 @@ public class FitnessTestManager : MonoBehaviour
         {
             Destroy(obj.gameObject);
         }
-        moveSamples.Clear();
+        instantiatedObj.Clear();
+        exerciseCount = 0;
+        etcTxt.text = "data cleared";
     }
 
+    //shoot beam out of hands, spawn a plane 
     private (Vector3, Quaternion) GetPosition()
     {
         Ray ray = new Ray(rightArmGameObject.transform.position, rightArmGameObject.transform.forward);
