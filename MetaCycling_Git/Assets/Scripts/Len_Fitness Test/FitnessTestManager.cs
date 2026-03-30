@@ -151,6 +151,9 @@ public class FitnessTestManager : MonoBehaviour
             //if still recording, end it
             if (isRecording)
                 Record(false);
+
+            trajectoryRecorder.StopRecording();
+
         };
 
         #endregion
@@ -187,14 +190,16 @@ public class FitnessTestManager : MonoBehaviour
             Record(true);
 
             trajectoryRecorder.StartRecording();
-            //basically call the function to record the movement,
+            //basically call the function to record the movement,n/x
             //so the track can be calc'd after the start point is calibrated
         }));
 
         //record manually
         controlMap.Prototype.B.started += ctx => {
             Record(true);
-            
+
+            trajectoryRecorder.StopRecording();
+
             //maybe put the end record thing here, need to discuss
         };
 
@@ -217,6 +222,9 @@ public class FitnessTestManager : MonoBehaviour
 
     private void Update()
     {
+        if (trajectoryRecorder == null)
+            trajectoryRecorder = TrajectoryRecorder.instance;
+
         if (isRecording)
         {
             RecordMovement();
@@ -272,6 +280,7 @@ public class FitnessTestManager : MonoBehaviour
 
         if (!spawnEndPoint)
             return;
+
         StartCoroutine(CalibratePos(result =>
         {
             if (calibratedStartPos == Vector3.zero)
@@ -300,7 +309,6 @@ public class FitnessTestManager : MonoBehaviour
             InstantiatePoints();
         }));
 
-        trajectoryRecorder.StopRecording();
 
     }
     private void SwapTracked()
@@ -436,7 +444,7 @@ public class FitnessTestManager : MonoBehaviour
                 obj.SetActive(true);
         }
 
-        etcTxt.text = $"did {exerciseCount%2} reps";
+        etcTxt.text = $"did {MathF.Floor(exerciseCount / 2)} reps";
     }
 
     private float CalcDist(Vector3 start, Vector3 end)

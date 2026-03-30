@@ -4367,9 +4367,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da58ade3c8607c40882c426ea0ea094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  trackedGameObject: {fileID: 1411800964}
   hmdGameObject: {fileID: 1411800964}
   rightArmGameObject: {fileID: 250105061}
-  trackedGameObject: {fileID: 1411800964}
   toleranceDist: 0.35
   positionCalibrationTime: 0.1
   calibrationSampleInterval: 0.05
@@ -5095,7 +5095,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d17ddd367a63ed44ca137857989bd415, type: 2}
+  - {fileID: 2100000, guid: db61aff0db9147843ae62c28d167292e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -19566,7 +19566,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _meshType: 4
+  _meshType: 0
 --- !u!114 &1171566288
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19597,7 +19597,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2609c54f376cffc4da1ab9401cc1a36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _skeletonType: 4
+  _skeletonType: 0
   _updateRootPose: 0
   _updateRootScale: 1
   _enablePhysicsCapsules: 0
@@ -28809,7 +28809,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cc5c234723e3a54d8dd09b131117743, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _meshType: 5
+  _meshType: 1
 --- !u!114 &1638565809
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28840,7 +28840,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2609c54f376cffc4da1ab9401cc1a36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _skeletonType: 5
+  _skeletonType: 1
   _updateRootPose: 0
   _updateRootScale: 1
   _enablePhysicsCapsules: 0
