@@ -15,7 +15,4 @@ EditorBuildSettings:
     path: Assets/Scenes/MetaCyclingJC.unity
     guid: f6486b3f7144dfa4f911ffe739a20f21
   m_configObjects:
-    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: ca2d434dac20a8e4c991e3fead97aff4, type: 2}
-    Unity.XR.OpenVR.Settings: {fileID: 11400000, guid: 042fdfd724536ce4a8eb00d0a10cc6a7, type: 2}
-    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: ffdbd9aac1bbe99498358393e4ef133c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 4fe48ac5be0b27f4eb5a9238cc167f66, type: 2}
