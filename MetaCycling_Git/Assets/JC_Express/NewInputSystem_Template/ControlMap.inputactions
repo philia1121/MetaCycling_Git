@@ -379,6 +379,17 @@
                 },
                 {
                     "name": "",
+                    "id": "d37da738-d96c-4302-a85e-1ebe8850c188",
+                    "path": "<Keyboard>/z",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Right_Trigger",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "b1a7a4b8-9a4a-45bf-9f12-59292460496f",
                     "path": "<XRController>{RightHand}/{GripButton}",
                     "interactions": "",
