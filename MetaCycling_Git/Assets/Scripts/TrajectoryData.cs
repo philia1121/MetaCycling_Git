@@ -10,23 +10,23 @@ public class MultiTrackWaypoint
 
     // Left Controller
     public Vector3 pos_LCont;
-    public Vector3 rot_LCont;
+    public Quaternion rot_LCont;
 
     // Right Controller
     public Vector3 pos_RCont;
-    public Vector3 rot_RCont;
+    public Quaternion rot_RCont;
 
     // Left Hand
     public Vector3 pos_LHand;
-    public Vector3 rot_LHand;
+    public Quaternion rot_LHand;
 
     // Right Hand
     public Vector3 pos_RHand;
-    public Vector3 rot_RHand;
+    public Quaternion rot_RHand;
 
     // HMD
     public Vector3 pos_HMD;
-    public Vector3 rot_HMD;
+    public Quaternion rot_HMD;
 
     public bool RHand_PosTracked;
     public bool RHand_RotTracked;

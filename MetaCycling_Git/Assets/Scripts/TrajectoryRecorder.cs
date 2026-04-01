@@ -100,22 +100,22 @@ public class TrajectoryRecorder : MonoBehaviour
 
         // Left Controller
         wp.pos_LCont = OVRInput.GetLocalControllerPosition(OVRInput.Controller.LTouch);
-        wp.rot_LCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LTouch).eulerAngles;
+        wp.rot_LCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LTouch);
 
         // Right Controller
         wp.pos_RCont = OVRInput.GetLocalControllerPosition(OVRInput.Controller.RTouch);
-        wp.rot_RCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RTouch).eulerAngles;
+        wp.rot_RCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RTouch);
         // Left Hand
         wp.pos_LHand = OVRInput.GetLocalControllerPosition(OVRInput.Controller.LHand);
-        wp.rot_LHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LHand).eulerAngles;
+        wp.rot_LHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LHand);
 
         // Right Hand
         wp.pos_RHand = OVRInput.GetLocalControllerPosition(OVRInput.Controller.RHand);
-        wp.rot_RHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand).eulerAngles;
+        wp.rot_RHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand);
 
         // HMD
         wp.pos_HMD = VRMainCam.position;
-        wp.rot_HMD = VRMainCam.rotation.eulerAngles;
+        wp.rot_HMD = VRMainCam.rotation;
 
         // Tracking State
         wp.RHand_PosTracked = trackingInfo.Get_RHand_PosTracked();

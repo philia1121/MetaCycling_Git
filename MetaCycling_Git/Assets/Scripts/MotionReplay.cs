@@ -95,38 +95,38 @@ public class MotionReplay : MonoBehaviour
         if (HMD_Transform != null)
         {
             HMD_Transform.localPosition = data.pos_HMD;
-            HMD_Transform.localEulerAngles = data.rot_HMD;
+            HMD_Transform.rotation = data.rot_HMD;
         }
 
         if (RCont_Transform != null)
         {
             RCont_Transform.localPosition = data.pos_RCont;
-            RCont_Transform.localEulerAngles = data.rot_RCont;
+            RCont_Transform.rotation = data.rot_RCont;
         }
 
         if (LCont_Transform != null)
         {
             LCont_Transform.localPosition = data.pos_LCont;
-            LCont_Transform.localEulerAngles = data.rot_LCont;
+            LCont_Transform.rotation = data.rot_LCont;
         }
 
         if (RHand_Transform != null)
         {
             RHand_Transform.localPosition = data.pos_RHand;
-            RHand_Transform.localEulerAngles = data.rot_RHand;
+            RHand_Transform.rotation = data.rot_RHand;
         }
 
         if (LHand_Transform != null)
         {
             LHand_Transform.localPosition = data.pos_LHand;
-            LHand_Transform.localEulerAngles = data.rot_LHand;
+            LHand_Transform.rotation = data.rot_LHand;
         }
     }
     void AlignToOrigin()
     {
         if (logData.waypoints.Count == 0 || ReplayRoot_Transform == null) return;
 
-        Vector3 startEuler = logData.waypoints[0].rot_HMD;
+        Vector3 startEuler = logData.waypoints[0].rot_HMD.eulerAngles;
         float startYaw = startEuler.y;
 
         ReplayRoot_Transform.rotation = Quaternion.Euler(0, -startYaw, 0);
