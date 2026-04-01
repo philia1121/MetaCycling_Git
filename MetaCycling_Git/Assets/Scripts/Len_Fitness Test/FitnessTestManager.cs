@@ -112,7 +112,7 @@ public class FitnessTestManager : MonoBehaviour
             }
 
             if (spawnedEndJumpPlane == null)
-                spawnedEndJumpPlane = Instantiate(planePrefabStart, pos, rot);
+                spawnedEndJumpPlane = Instantiate(planePrefabEnd, pos, rot);
             else
             {
                 spawnedEndJumpPlane.transform.position = pos;

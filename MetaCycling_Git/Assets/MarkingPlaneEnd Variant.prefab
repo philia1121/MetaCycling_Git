@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 500299049823287037, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     - target: {fileID: 588885509552807263, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -56,9 +60,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3917563324317143743, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3917563324317143743, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 3917563324317143743, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 4049538693725327104, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
       propertyPath: m_Name
       value: MarkingPlaneEnd Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 6226395470839625163, guid: 73e74e14f93e56d45930e816553d10b7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
