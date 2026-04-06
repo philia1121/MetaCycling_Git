@@ -3,6 +3,7 @@ using Oculus.Interaction.Input;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -31,7 +32,6 @@ public class FitnessTestManager : MonoBehaviour
     [SerializeField] private GameObject pointPrefabEnd;
     [SerializeField] private GameObject planePrefabStart;
     [SerializeField] private GameObject planePrefabEnd;
-    [SerializeField] private LayerMask floorLayer;
 
     [Header("Display Variables")]
     [SerializeField] private TMP_Text startTxt;
@@ -67,6 +67,8 @@ public class FitnessTestManager : MonoBehaviour
     TrajectoryRecorder trajectoryRecorder;
 
     ControlMap controlMap;
+    PathVisualizer path;
+
     void Awake()
     {
         trajectoryRecorder = TrajectoryRecorder.instance;
@@ -78,21 +80,7 @@ public class FitnessTestManager : MonoBehaviour
         //spawn the planes n calc
         controlMap.Prototype.Right_Trigger.started += ctx => 
         {
-            var (pos, rot) = GetPosition();
-
-            if (pos == Vector3.zero || rot == Quaternion.identity)
-            {
-                etcTxt.text = ("Floor undetected");
-                return;
-            }
-
-            if (spawnedStartJumpPlane == null)
-                spawnedStartJumpPlane = Instantiate(planePrefabStart, pos, rot);
-            else
-            {
-                spawnedStartJumpPlane.transform.position = pos;
-                spawnedStartJumpPlane.transform.rotation = rot;
-            }
+            SpawnJumpPlane(ref spawnedStartJumpPlane, planePrefabStart);
 
             if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
                 return;
@@ -103,21 +91,7 @@ public class FitnessTestManager : MonoBehaviour
 
         controlMap.Prototype.Right_Grip.started += ctx =>
         {
-            var (pos, rot) = GetPosition();
-
-            if (pos == Vector3.zero || rot == Quaternion.identity)
-            {
-                etcTxt.text = ("Floor undetected");
-                return;
-            }
-
-            if (spawnedEndJumpPlane == null)
-                spawnedEndJumpPlane = Instantiate(planePrefabEnd, pos, rot);
-            else
-            {
-                spawnedEndJumpPlane.transform.position = pos;
-                spawnedEndJumpPlane.transform.rotation = rot;
-            }
+            SpawnJumpPlane(ref spawnedEndJumpPlane, planePrefabEnd);
 
             if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
                 return;
@@ -131,10 +105,7 @@ public class FitnessTestManager : MonoBehaviour
             jumpedPos = Vector3.zero;
             jumpedPos = trackedGameObject.transform.position;
 
-            if (spawnedEndJumpPoint == null)
-                spawnedEndJumpPoint = Instantiate(pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
-            else
-                spawnedEndJumpPoint.transform.position = new Vector3(jumpedPos.x, 0, jumpedPos.z);
+            spawnedEndJumpPoint = CheckInstantiatedObject(spawnedEndJumpPoint, pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
 
             float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
 
@@ -153,6 +124,8 @@ public class FitnessTestManager : MonoBehaviour
                 Record(false);
 
             trajectoryRecorder.StopRecording();
+            path.EndRecording();
+
 
         };
 
@@ -172,11 +145,8 @@ public class FitnessTestManager : MonoBehaviour
             etcTxt.text = "start pos calibrated";
             lastTrackedPos = result;
 
-            if(spawnedStartJumpPoint == null)
-                spawnedStartJumpPoint = Instantiate(pointPrefabStart, new Vector3(result.x, 0, result.z), Quaternion.identity);
-            else
-                spawnedStartJumpPoint.transform.position = new Vector3(result.x, 0, result.z);
-
+            spawnedStartJumpPoint = CheckInstantiatedObject(spawnedStartJumpPoint, pointPrefabStart, new Vector3(result.x, 0, result.z), Quaternion.identity);
+          
             //add 1st pos
             MotionPoint point = new MotionPoint
             {
@@ -190,6 +160,8 @@ public class FitnessTestManager : MonoBehaviour
             Record(true);
 
             trajectoryRecorder.StartRecording();
+            path.StartRecording();
+
             //basically call the function to record the movement,n/x
             //so the track can be calc'd after the start point is calibrated
         }));
@@ -199,18 +171,32 @@ public class FitnessTestManager : MonoBehaviour
             Record(true);
 
             trajectoryRecorder.StopRecording();
-
-            //maybe put the end record thing here, need to discuss
+            path.EndRecording();
         };
 
         //record end pos
         controlMap.Prototype.Y.started += ctx =>
         {
-            float dist = CalcDist(hmdGameObject.transform.position, rightArmGameObject.transform.position);
-            etcTxt.text = $"head to arm = {Mathf.Abs(dist) * 100} cm";
+            //float dist = CalcDist(hmdGameObject.transform.position, rightArmGameObject.transform.position);
+            //etcTxt.text = $"head to arm = {Mathf.Abs(dist) * 100} cm";
+            path.DisplayPath();
         };
 
         controlMap.Prototype.Left_Grip.started += ctx => ClearTrackingData();
+    }
+
+    private GameObject CheckInstantiatedObject(GameObject objVar, GameObject objPrefab, Vector3 pos, Quaternion rot)
+    {
+
+        if (objVar == null)
+            objVar = Instantiate(objPrefab, pos, rot);
+        else
+        {
+            objVar.transform.position = pos;
+            objVar.SetActive(true);
+        }
+
+        return objVar;
     }
 
     private void Start()
@@ -224,6 +210,8 @@ public class FitnessTestManager : MonoBehaviour
     {
         if (trajectoryRecorder == null)
             trajectoryRecorder = TrajectoryRecorder.instance;
+        if (path == null)
+            path = PathVisualizer.instance;
 
         if (isRecording)
         {
@@ -240,11 +228,8 @@ public class FitnessTestManager : MonoBehaviour
 
         Vector3 currPos = trackedGameObject.transform.position;
 
-        if (calibratedStartPos == Vector3.zero || calibratedEndPos == Vector3.zero)
-            return;
-
         float minDist = .05f;
-        jumpTxt.text = $"toStr {Mathf.Abs(CalcDist(currPos, calibratedStartPos))}, toEd {Mathf.Abs(CalcDist(currPos, calibratedEndPos))}, {minDist}";
+        //jumpTxt.text = $"toStr {Mathf.Abs(CalcDist(currPos, calibratedStartPos))}, toEd {Mathf.Abs(CalcDist(currPos, calibratedEndPos))}, {minDist}";
 
         if (!isLastHitStart && Mathf.Abs(CalcDist(currPos, calibratedStartPos)) <= minDist)
         {
@@ -364,7 +349,19 @@ public class FitnessTestManager : MonoBehaviour
 
         return sum / pt.Count;
     }
-    
+    private void SpawnJumpPlane(ref GameObject obj, GameObject prefab)
+    {
+        var (pos, rot) = GetPosition();
+
+        if (pos == Vector3.zero)
+        {
+            etcTxt.text = "Floor undetected";
+            return;
+        }
+
+        obj = CheckInstantiatedObject(obj, prefab, pos, rot);
+    }
+
     private void RecordMovement()
     {
         //save to list if the position changes around 2-3 cm
@@ -467,6 +464,12 @@ public class FitnessTestManager : MonoBehaviour
         }
         instantiatedObj.Clear();
         exerciseCount = 0;
+
+        if (spawnedStartJumpPlane != null) spawnedEndJumpPlane.SetActive(false);
+        if (spawnedEndJumpPlane != null) spawnedEndJumpPlane.SetActive(false);
+        if (spawnedStartJumpPoint != null) spawnedStartJumpPoint.SetActive(false);
+        if (spawnedEndJumpPoint != null) spawnedEndJumpPoint.SetActive(false);
+
         etcTxt.text = "data cleared";
     }
 
