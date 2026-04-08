@@ -26,6 +26,7 @@ public class PathVisualizer : MonoBehaviour
     private List<MotionPointSimple> lHandMotionPoints;
 
     private Coroutine sampleRoutine;
+    private Coroutine loopRoutineHead, loopRoutineLHand, loopRoutineRHand;
     private void Awake()
     {
         if (instance == null)
@@ -51,7 +52,6 @@ public class PathVisualizer : MonoBehaviour
         if (isRecording)
             return;
         
-        PlaybackObjSetActive(false);
         ClearMotionData();
         isRecording = true;
         sampleRoutine = StartCoroutine(SampleMotion());
@@ -72,9 +72,9 @@ public class PathVisualizer : MonoBehaviour
         if (hmdMotionPoints.Count <= 0 || lHandMotionPoints.Count <= 0 || rHandMotionPoints.Count <= 0)
             return;
 
-        StartCoroutine(PlayPathLoop(hmdMotionPoints, hmdPlayback));
-        StartCoroutine(PlayPathLoop(lHandMotionPoints, lHandPlayback));
-        StartCoroutine(PlayPathLoop(rHandMotionPoints, rHandPlayback));
+        loopRoutineHead = StartCoroutine(PlayPathLoop(hmdMotionPoints, hmdPlayback));
+        loopRoutineLHand = StartCoroutine(PlayPathLoop(lHandMotionPoints, lHandPlayback));
+        loopRoutineRHand = StartCoroutine(PlayPathLoop(rHandMotionPoints, rHandPlayback));
     }
 
     IEnumerator SampleMotion()
@@ -132,7 +132,7 @@ public class PathVisualizer : MonoBehaviour
         }
     }
 
-    private void ClearMotionData()
+    public void ClearMotionData()
     {
         hmdMotionPoints.Clear();
         lHandMotionPoints.Clear();
@@ -141,6 +141,12 @@ public class PathVisualizer : MonoBehaviour
         hmdMotionPoints = new List<MotionPointSimple>();
         rHandMotionPoints = new List<MotionPointSimple>();
         lHandMotionPoints = new List<MotionPointSimple>();
+
+        if(loopRoutineHead!=null) StopCoroutine(loopRoutineHead);
+        if (loopRoutineLHand!= null) StopCoroutine(loopRoutineLHand);
+        if (loopRoutineRHand != null) StopCoroutine(loopRoutineRHand);
+
+        PlaybackObjSetActive(false);
     }
 
     private void PlaybackObjSetActive(bool active)

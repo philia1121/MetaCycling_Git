@@ -126,7 +126,7 @@ public class FitnessTestManager : MonoBehaviour
             trajectoryRecorder.StopRecording();
             path.EndRecording();
 
-
+            path.DisplayPath();
         };
 
         #endregion
@@ -172,6 +172,7 @@ public class FitnessTestManager : MonoBehaviour
 
             trajectoryRecorder.StopRecording();
             path.EndRecording();
+            path.DisplayPath();
         };
 
         //record end pos
@@ -469,6 +470,8 @@ public class FitnessTestManager : MonoBehaviour
         if (spawnedEndJumpPlane != null) spawnedEndJumpPlane.SetActive(false);
         if (spawnedStartJumpPoint != null) spawnedStartJumpPoint.SetActive(false);
         if (spawnedEndJumpPoint != null) spawnedEndJumpPoint.SetActive(false);
+
+        path.ClearMotionData();
 
         etcTxt.text = "data cleared";
     }
