@@ -17,6 +17,7 @@ public class TrajectoryRecorder : MonoBehaviour
 
     //added for making this into singleton
     public static TrajectoryRecorder instance;
+    string filePrefix = "MultiTraj";
 
     void Awake()
     {
@@ -132,9 +133,15 @@ public class TrajectoryRecorder : MonoBehaviour
     void SaveToFile()
     {
         string json = JsonUtility.ToJson(currentSession, true);
-        string path = Path.Combine(Application.persistentDataPath, $"MultiTraj_{System.DateTime.Now:yyyyMMdd_HHmmss}.json");
+        string path = Path.Combine(Application.persistentDataPath, $"{filePrefix}_{System.DateTime.Now:yyyyMMdd_HHmmss}.json");
         File.WriteAllText(path, json);
         Debug.Log($"File saved at : {path}");
     }
+    public void SetFilePrefix(string prefix)
+    {
+        if (prefix == null) return;
+        filePrefix = prefix;
+    }
+    public string GetFilePrefix(){ return filePrefix; }
 
 }
