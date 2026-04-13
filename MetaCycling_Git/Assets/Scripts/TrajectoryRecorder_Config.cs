@@ -5,8 +5,8 @@ using UnityEngine;
 public class TrajectoryRecorder_Config : MonoBehaviour
 {
     [SerializeField] private bool setOnAwake = true;
-    [SerializeField]private NamingType namingType = NamingType.Custom;
-    [SerializeField] private string filePrefix;
+    [SerializeField] private NamingType namingType = NamingType.Custom;
+    [SerializeField] private string filePrefix = "MultiTraj";
 
     void Awake()
     {
