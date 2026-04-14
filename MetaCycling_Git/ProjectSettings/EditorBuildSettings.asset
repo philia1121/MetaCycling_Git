@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/Main Scene.unity
+    path: Assets/Mirror/Examples/BenchmarkStinkySteak/Main.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 0
     path: Assets/Scenes/MetaCyclingTest.unity
@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FitnessTest.unity
     guid: 0e74fe990a35cf545b41265247787ee3
+  - enabled: 0
+    path: Assets/Scenes/_Host_Fitness.unity
+    guid: 00f8f50de7127ac42926bbd563841512
   m_configObjects:
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 4fe48ac5be0b27f4eb5a9238cc167f66, type: 2}

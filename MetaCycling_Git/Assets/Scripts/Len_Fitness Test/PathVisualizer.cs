@@ -21,12 +21,24 @@ public class PathVisualizer : MonoBehaviour
     [SerializeField] private Transform lHandPlayback;
     [SerializeField] private Transform rHandPlayback;
 
+    [SerializeField] private Transform hmdPlaybackTrail;
+    [SerializeField] private Transform lHandPlaybackTrail;
+    [SerializeField] private Transform rHandPlaybackTrail;
+
+
     private List<MotionPointSimple> hmdMotionPoints;
     private List<MotionPointSimple> rHandMotionPoints;
     private List<MotionPointSimple> lHandMotionPoints;
 
+    private List<GameObject> hmdMotionPath;
+    private List<GameObject> rHandMotionPath;
+    private List<GameObject> lHandMotionPath;
+
     private Coroutine sampleRoutine;
     private Coroutine loopRoutineHead, loopRoutineLHand, loopRoutineRHand;
+
+    private bool isDisplayingTrailingPath = true;
+    private int sampleCounter = 0;
     private void Awake()
     {
         if (instance == null)
@@ -37,14 +49,14 @@ public class PathVisualizer : MonoBehaviour
         hmdMotionPoints = new List<MotionPointSimple>();
         rHandMotionPoints = new List<MotionPointSimple>();
         lHandMotionPoints = new List<MotionPointSimple>();
+
+        hmdMotionPath = new List<GameObject>();
+        lHandMotionPath = new List<GameObject>();
+        rHandMotionPath = new List<GameObject>();
     }
     private void Start()
     {
         PlaybackObjSetActive(false);
-    }
-    private void Update()
-    {
-
     }
 
     public void StartRecording()
@@ -77,6 +89,20 @@ public class PathVisualizer : MonoBehaviour
         loopRoutineRHand = StartCoroutine(PlayPathLoop(rHandMotionPoints, rHandPlayback));
     }
 
+    public void DisplayTrailingPath()
+    {
+        isDisplayingTrailingPath = !isDisplayingTrailingPath;
+
+        if (isDisplayingTrailingPath)
+            return;
+        foreach (GameObject g in hmdMotionPath)
+            g.SetActive(false);
+        foreach (GameObject b in lHandMotionPath)
+            b.SetActive(false);
+        foreach (GameObject c in rHandMotionPath)
+            c.SetActive(false);
+    }
+
     IEnumerator SampleMotion()
     {
         float lastSampleTime = Time.time;
@@ -93,6 +119,14 @@ public class PathVisualizer : MonoBehaviour
                 AddMotion(lHandMotionPoints, LHand_Transform.position, LHand_Transform.rotation);
                 AddMotion(rHandMotionPoints, RHand_Transform.position, RHand_Transform.rotation);
             }
+            sampleCounter++;
+
+            if (sampleCounter % 2 == 0)
+            {
+                CreateHiddenMarker(hmdMotionPath, hmdPlaybackTrail, HMD_Transform);
+                CreateHiddenMarker(lHandMotionPath, lHandPlaybackTrail, LHand_Transform);
+                CreateHiddenMarker(rHandMotionPath, rHandPlaybackTrail, RHand_Transform);
+            }
 
             yield return new WaitForSeconds(interval);
         }
@@ -107,6 +141,38 @@ public class PathVisualizer : MonoBehaviour
         };
         list.Add(point);
     }
+    private void CreateHiddenMarker(List<GameObject> list,Transform prefab, Transform source)
+    {
+
+        Transform marker = Instantiate(prefab, source.position, source.rotation);
+        //marker.GetComponent<Nametag>().isDisplayName = false;
+        marker.localScale = prefab.localScale * 0.5f;
+
+        // Hide it immediately so it doesn't clutter the recording view
+        marker.gameObject.SetActive(false);
+
+        list.Add(marker.gameObject);
+    }
+
+    private void ActivateHiddenMarker(List<GameObject> list, int startIndex, int windowSize)
+    {
+        if (!isDisplayingTrailingPath)
+            return;
+
+        if(startIndex<0)
+            startIndex = 0;
+        for (int i = 0; i < list.Count; i++)
+        {
+            // Check if the current index is within the 10-item window
+            bool shouldBeActive = (i >= startIndex && i < startIndex + windowSize);
+
+            // Only call SetActive if the state actually needs to change (performance boost)
+            if (list[i].activeSelf != shouldBeActive)
+            {
+                list[i].SetActive(shouldBeActive);
+            }
+        }
+    }
 
     private IEnumerator PlayPathLoop(List<MotionPointSimple> path, Transform target)
     {
@@ -116,6 +182,12 @@ public class PathVisualizer : MonoBehaviour
             {
                 MotionPointSimple start = path[i];
                 MotionPointSimple end = path[i + 1];
+
+                int markerIndex = i / 2;
+
+                ActivateHiddenMarker(hmdMotionPath, markerIndex-4, 9);
+                ActivateHiddenMarker(lHandMotionPath, markerIndex-4, 9);
+                ActivateHiddenMarker(rHandMotionPath, markerIndex-4, 9);
 
                 float t = 0f;
 
@@ -142,7 +214,15 @@ public class PathVisualizer : MonoBehaviour
         rHandMotionPoints = new List<MotionPointSimple>();
         lHandMotionPoints = new List<MotionPointSimple>();
 
-        if(loopRoutineHead!=null) StopCoroutine(loopRoutineHead);
+        foreach (GameObject g in hmdMotionPath) Destroy(g);
+        foreach (GameObject g in lHandMotionPath) Destroy(g);
+        foreach (GameObject g in rHandMotionPath) Destroy(g);
+
+        hmdMotionPath = new List<GameObject>();
+        lHandMotionPath = new List<GameObject>();
+        rHandMotionPath = new List<GameObject>();
+
+        if (loopRoutineHead!=null) StopCoroutine(loopRoutineHead);
         if (loopRoutineLHand!= null) StopCoroutine(loopRoutineLHand);
         if (loopRoutineRHand != null) StopCoroutine(loopRoutineRHand);
 
