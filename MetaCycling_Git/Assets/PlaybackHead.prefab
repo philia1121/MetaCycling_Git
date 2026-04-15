@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: Head
   nameText: {fileID: 1428705447041624057}
-  isDisplayName: 0
+  isDisplayName: 1
 --- !u!1 &4971035940130241689
 GameObject:
   m_ObjectHideFlags: 0

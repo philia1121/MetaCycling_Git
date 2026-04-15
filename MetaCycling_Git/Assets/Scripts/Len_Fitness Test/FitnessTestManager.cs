@@ -127,6 +127,7 @@ public class FitnessTestManager : MonoBehaviour
             path.EndRecording();
 
             path.DisplayPath();
+            etcTxt.text = "Displaying path";
         };
 
         #endregion
