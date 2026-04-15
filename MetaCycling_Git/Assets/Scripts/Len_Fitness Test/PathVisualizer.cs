@@ -38,7 +38,8 @@ public class PathVisualizer : MonoBehaviour
     private Coroutine loopRoutineHead, loopRoutineLHand, loopRoutineRHand;
 
     private bool isDisplayingTrailingPath = true;
-    private int sampleCounter = 0;
+    private int displayID = 0;
+    private int displayAmount = 10;
     private void Awake()
     {
         if (instance == null)
@@ -91,16 +92,38 @@ public class PathVisualizer : MonoBehaviour
 
     public void DisplayTrailingPath()
     {
-        isDisplayingTrailingPath = !isDisplayingTrailingPath;
+        displayID++;
+        if (displayID >= 5) displayID = 1;
 
-        if (isDisplayingTrailingPath)
-            return;
-        foreach (GameObject g in hmdMotionPath)
-            g.SetActive(false);
-        foreach (GameObject b in lHandMotionPath)
-            b.SetActive(false);
-        foreach (GameObject c in rHandMotionPath)
-            c.SetActive(false);
+        if (displayID == 1)
+        {
+            isDisplayingTrailingPath = true;
+            displayAmount = 10;
+        }
+        if (displayID == 2)
+        {
+            isDisplayingTrailingPath = true;
+            displayAmount = 20;
+        }
+        if(displayID == 3)
+        {
+            isDisplayingTrailingPath = true;
+            displayAmount = -5;
+        }
+        if (displayID == 4)
+        {
+            isDisplayingTrailingPath = false;
+
+            if (isDisplayingTrailingPath)
+                return;
+            foreach (GameObject g in hmdMotionPath)
+                g.SetActive(false);
+            foreach (GameObject b in lHandMotionPath)
+                b.SetActive(false);
+            foreach (GameObject c in rHandMotionPath)
+                c.SetActive(false);
+        }
+        
     }
 
     IEnumerator SampleMotion()
@@ -119,14 +142,10 @@ public class PathVisualizer : MonoBehaviour
                 AddMotion(lHandMotionPoints, LHand_Transform.position, LHand_Transform.rotation);
                 AddMotion(rHandMotionPoints, RHand_Transform.position, RHand_Transform.rotation);
             }
-            sampleCounter++;
 
-            if (sampleCounter % 2 == 0)
-            {
-                CreateHiddenMarker(hmdMotionPath, hmdPlaybackTrail, HMD_Transform);
-                CreateHiddenMarker(lHandMotionPath, lHandPlaybackTrail, LHand_Transform);
-                CreateHiddenMarker(rHandMotionPath, rHandPlaybackTrail, RHand_Transform);
-            }
+            CreateHiddenMarker(hmdMotionPath, hmdPlaybackTrail, HMD_Transform);
+            CreateHiddenMarker(lHandMotionPath, lHandPlaybackTrail, LHand_Transform);
+            CreateHiddenMarker(rHandMotionPath, rHandPlaybackTrail, RHand_Transform);
 
             yield return new WaitForSeconds(interval);
         }
@@ -159,14 +178,23 @@ public class PathVisualizer : MonoBehaviour
         if (!isDisplayingTrailingPath)
             return;
 
-        if(startIndex<0)
+        //set this to view everything
+        if(startIndex<0 && windowSize < 0)
+        {
+            foreach (GameObject g in list)
+            {
+                g.SetActive(true);
+            }
+            return;
+        }
+
+        //view certain numbers
+        if (startIndex < 0)
             startIndex = 0;
         for (int i = 0; i < list.Count; i++)
         {
-            // Check if the current index is within the 10-item window
             bool shouldBeActive = (i >= startIndex && i < startIndex + windowSize);
 
-            // Only call SetActive if the state actually needs to change (performance boost)
             if (list[i].activeSelf != shouldBeActive)
             {
                 list[i].SetActive(shouldBeActive);
@@ -185,9 +213,9 @@ public class PathVisualizer : MonoBehaviour
 
                 int markerIndex = i / 2;
 
-                ActivateHiddenMarker(hmdMotionPath, markerIndex-4, 9);
-                ActivateHiddenMarker(lHandMotionPath, markerIndex-4, 9);
-                ActivateHiddenMarker(rHandMotionPath, markerIndex-4, 9);
+                ActivateHiddenMarker(hmdMotionPath, displayAmount/2, displayAmount);
+                ActivateHiddenMarker(lHandMotionPath, displayAmount/2, displayAmount);
+                ActivateHiddenMarker(rHandMotionPath, displayAmount/2, displayAmount);
 
                 float t = 0f;
 
