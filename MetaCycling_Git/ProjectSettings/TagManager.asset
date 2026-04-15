@@ -6,6 +6,7 @@ TagManager:
   tags:
   - FitnessTrackedObj
   - Floor
+  - PlayerHead
   layers:
   - Default
   - TransparentFX

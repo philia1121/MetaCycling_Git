@@ -133,7 +133,7 @@ public class FitnessTestManager : MonoBehaviour
 
 
         //swap tracking
-        controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
+        //controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
 
         //determine start, then start to record
         controlMap.Prototype.A.started += ctx => StartCoroutine(CalibratePos(result =>
@@ -166,21 +166,22 @@ public class FitnessTestManager : MonoBehaviour
             //so the track can be calc'd after the start point is calibrated
         }));
 
-        //record manually
-        controlMap.Prototype.B.started += ctx => {
-            Record(true);
+        //record manually for now unused
+        //controlMap.Prototype.B.started += ctx => {
+        //    Record(true);
 
-            trajectoryRecorder.StopRecording();
-            path.EndRecording();
-            path.DisplayPath();
-        };
+        //    trajectoryRecorder.StopRecording();
+        //    path.EndRecording();
+        //    path.DisplayPath();
+        //};
 
         //record end pos
         controlMap.Prototype.Y.started += ctx =>
         {
+            path.DisplayTrailingPath();
             //float dist = CalcDist(hmdGameObject.transform.position, rightArmGameObject.transform.position);
             //etcTxt.text = $"head to arm = {Mathf.Abs(dist) * 100} cm";
-            path.DisplayPath();
+            //path.DisplayPath();
         };
 
         controlMap.Prototype.Left_Grip.started += ctx => ClearTrackingData();
