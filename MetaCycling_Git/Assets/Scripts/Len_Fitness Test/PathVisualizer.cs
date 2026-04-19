@@ -45,8 +45,10 @@
         private Coroutine loopRoutineHead, loopRoutineLHand, loopRoutineRHand;
 
         private bool isDisplayingTrailingPath = true;
-        private int displayID = 1;
+        public int displayID = 1;
         private int displayAmount = 10;
+        private int currentPlaybackIndex = 0;
+
         private void Awake()
         {
             if (instance == null)
@@ -83,6 +85,25 @@
                 return;
             isRecording = false;
             StopCoroutine(sampleRoutine);
+        }
+
+        public void OnDensityChanged(float newValue)
+        {
+            pathDensity = Mathf.RoundToInt(newValue);
+
+            // Refresh the visuals for all 3 limbs immediately
+            RefreshVisuals(hmdMotionPath, hmdMotionPoints, hmdLine);
+            RefreshVisuals(lHandMotionPath, lHandMotionPoints, lHandLine);
+            RefreshVisuals(rHandMotionPath, rHandMotionPoints, rHandLine);
+        }
+
+        private void RefreshVisuals(List<GameObject> motionPath, List<MotionPointSimple> points, LineRenderer line)
+        {
+            if (points.Count == 0) return;
+
+            // Reuse your existing logic to update markers and lines
+            ActivateHiddenMarker(motionPath, currentPlaybackIndex, displayAmount);
+            UpdateLine(line, points, currentPlaybackIndex, displayAmount);
         }
 
         public void DisplayPath()
@@ -218,6 +239,7 @@
                     MotionPointSimple end = path[i + 1];
 
                     int markerIndex = i; // Map current playback step to the marker list
+                    currentPlaybackIndex = i;
 
                     ActivateHiddenMarker(motionPath, markerIndex, displayAmount);
                     UpdateLine(line, path, markerIndex, displayAmount);
