@@ -459,6 +459,9 @@ public class FitnessTestManager : MonoBehaviour
 
     public void ClearTrackingData()
     {
+        if (isRecording)
+            return;
+
         posSamples.Clear();
         moveSamples.Clear();
         calibratedStartPos = Vector3.zero;

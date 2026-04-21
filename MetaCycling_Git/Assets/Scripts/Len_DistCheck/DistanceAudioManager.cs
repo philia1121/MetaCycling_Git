@@ -10,7 +10,8 @@ public class DistanceAudioManager : MonoBehaviour
 
     [Header("fire vars")]
     [SerializeField]private AudioSource fireSrc;
-    [SerializeField] private AudioClip[] fires;
+    [SerializeField] private AudioClip fireL;
+    [SerializeField] private AudioClip fireR;
 
     ControlMap controlMap;
     private PathVisualizer path;
@@ -20,21 +21,15 @@ public class DistanceAudioManager : MonoBehaviour
         controlMap = new ControlMap();
         controlMap.Prototype.Enable();
 
-        controlMap.Prototype.A.started += ctx =>
-        {
-            path.StartRecording();
-        };
+        controlMap.Prototype.Left_Trigger.started += ctx => PlayRandomSound(true);
+        controlMap.Prototype.Left_Grip.started += ctx => PlayRandomSound(true);
+        controlMap.Prototype.Right_Trigger.started += ctx => PlayRandomSound(false);
+        controlMap.Prototype.Right_Grip.started += ctx => PlayRandomSound(false);
 
-        controlMap.Prototype.X.started += ctx =>
-        {
-            path.StartRecording();
-        };
-
-        controlMap.Prototype.Left_Trigger.started += ctx => PlayRandomSound();
-        controlMap.Prototype.Right_Trigger.started += ctx => PlayRandomSound();
-
-        controlMap.Prototype.B.started += ctx => PlayRandomSound();
-        controlMap.Prototype.Y.started += ctx => PlayRandomSound();
+        controlMap.Prototype.X.started += ctx => PlayRandomSound(true);
+        controlMap.Prototype.B.started += ctx => PlayRandomSound(false);
+        controlMap.Prototype.A.started += ctx => PlayRandomSound(false);
+        controlMap.Prototype.Y.started += ctx => PlayRandomSound(true);
     }
 
     private void Start()
@@ -45,12 +40,13 @@ public class DistanceAudioManager : MonoBehaviour
         bgmSrc.enabled = true;
         bgmSrc.clip = bgm;
         bgmSrc.Play();
+
+        path.StartRecording();
     }
 
-    private void PlayRandomSound()
+    private void PlayRandomSound(bool L)
     {
-        int i = Random.Range(0, fires.Length);
-        AudioClip _c = fires[i];
+        AudioClip _c = L ? fireL : fireR;
         fireSrc.PlayOneShot(_c);
     }
 
@@ -58,5 +54,10 @@ public class DistanceAudioManager : MonoBehaviour
     {
         if (path == null)
             path = PathVisualizer.instance;
+    }
+
+    private void OnApplicationQuit()
+    {
+        path.EndRecording();
     }
 }

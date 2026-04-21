@@ -17,12 +17,12 @@ public class FitnessUIManager : MonoBehaviour
 
     [Header("Position Indicators")]
     [SerializeField] private GameObject startPrefab;
-    [SerializeField] private GameObject endPrefab;
     [SerializeField] private TMP_Text moveDistText;
     [SerializeField] private TMP_Text heightTxt;
 
     private FitnessTestManager m_fitness;
     private PathVisualizer m_path;
+    private ReplayManager m_replay;
 
     private bool isPlaying = false;
     private JumpResult jumpRes;
@@ -30,26 +30,28 @@ public class FitnessUIManager : MonoBehaviour
     {
         m_fitness = FitnessTestManager.instance;
         m_path = PathVisualizer.instance;
+        m_replay = ReplayManager.instance;
 
         CheckDisplayType();
-        endBtn.gameObject.SetActive(false);
+        endBtn.interactable = false;
 
         startBtn.onClick.AddListener(() => {
             //start moving if isplaying false
-            if (isPlaying)
+            if (!isPlaying)
                 m_fitness.StartMovement(success => {
                     if (!success)
                         return;
                     jumpRes = new JumpResult();
                     isPlaying = !isPlaying;
 
-                    startBtn.gameObject.SetActive(false);
-                    endBtn.gameObject.SetActive(true);
+                    startBtn.interactable = false;
+                    endBtn.interactable = true;
                 });
             //or end moving if isplaying is true
         });
+
         endBtn.onClick.AddListener(() => {
-            if (!isPlaying)
+            if (isPlaying)
             {
                 jumpRes = m_fitness.EndMovement();
                 if (!jumpRes.success)
@@ -58,21 +60,27 @@ public class FitnessUIManager : MonoBehaviour
                 heightTxt.text = $"Highest point {jumpRes.height} cm";
                 isPlaying = !isPlaying;
 
-                startBtn.gameObject.SetActive(true);
-                endBtn.gameObject.SetActive(false);
+                startBtn.interactable = true;
+                endBtn.interactable = false;
+
+                densitySlider.value = 1;
+
+                m_replay.RefreshReplayList();
             }
         });
+
         densitySlider.onValueChanged.AddListener(m_path.OnDensityChanged);
+
         changeDisplayBtn.onClick.AddListener(()=> { m_path.DisplayTrailingPath();
             CheckDisplayType();
         });
+
         resetBtn.onClick.AddListener(m_fitness.ClearTrackingData);
     }
 
     private void Update()
     {
         startPrefab.SetActive(m_fitness.calibratedStartPos != Vector3.zero);
-        endPrefab.SetActive(m_fitness.calibratedEndPos!= Vector3.zero);
     }
 
     private void CheckDisplayType()

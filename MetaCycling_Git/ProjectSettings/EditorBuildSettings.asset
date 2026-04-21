@@ -20,5 +20,8 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/_Host_Fitness.unity
     guid: 00f8f50de7127ac42926bbd563841512
+  - enabled: 0
+    path: Assets/Scenes/_Req_LostDistCheck.unity
+    guid: 6c997c24a310218408fb887b71b05487
   m_configObjects:
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 4fe48ac5be0b27f4eb5a9238cc167f66, type: 2}
