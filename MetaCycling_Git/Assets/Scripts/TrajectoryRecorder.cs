@@ -133,7 +133,7 @@ public class TrajectoryRecorder : MonoBehaviour
     void SaveToFile()
     {
         string json = JsonUtility.ToJson(currentSession, true);
-        string path = Path.Combine(Application.persistentDataPath, $"{filePrefix}_{System.DateTime.Now:yyyyMMdd_HHmmss}.json");
+        string path = Path.Combine(Application.persistentDataPath, $"{filePrefix}_{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}.json");
         File.WriteAllText(path, json);
         Debug.Log($"File saved at : {path}");
     }
