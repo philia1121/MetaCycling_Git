@@ -10,6 +10,7 @@ public class FrontFloatyUI : MonoBehaviour
     public float smoothSpeed = 3.0f;
     public float updateInterval = 1.5f;
     public Vector3 offset;
+    public bool isFollow; //should this follow player or not
     Vector3 targetPosition;
 
     Coroutine updateCoroutine;
@@ -22,7 +23,7 @@ public class FrontFloatyUI : MonoBehaviour
     void OnEnable()
     {
         UpdateTargetTransform();
-        transform.position = targetPosition + offset;
+        if (isFollow) transform.position = targetPosition + offset;
         if (updateCoroutine != null) StopCoroutine(updateCoroutine);
         updateCoroutine = StartCoroutine(UpdatePositionTimer());
     }
@@ -36,8 +37,12 @@ public class FrontFloatyUI : MonoBehaviour
     }
     void Update()
     {
-        transform.position = Vector3.Lerp(transform.position, targetPosition + offset, Time.deltaTime * smoothSpeed);
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.position - vrCamera.position), Time.deltaTime * smoothSpeed);
+
+        if(!isFollow)
+            return;
+        transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * smoothSpeed);
+
     }
     IEnumerator UpdatePositionTimer()
     {
@@ -49,6 +54,9 @@ public class FrontFloatyUI : MonoBehaviour
     }
     void UpdateTargetTransform()
     {
-        targetPosition = vrCamera.position + (vrCamera.forward * distance);
+        Vector3 basePt = vrCamera.position + (vrCamera.forward * distance);
+        Vector3 relativeOffset = vrCamera.TransformDirection(offset);
+
+        targetPosition = basePt + relativeOffset;
     }
 }

@@ -2,6 +2,7 @@ using Meta.XR.BuildingBlocks.AIBlocks;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -16,6 +17,8 @@ public class ReplayManager : MonoBehaviour
     [SerializeField] private Transform rHandPlayback;
 
     [SerializeField] private TMP_Text loggingTxt;
+
+    public bool isSortByName = true;
 
     public static ReplayManager instance;
 
@@ -61,26 +64,31 @@ public class ReplayManager : MonoBehaviour
         }
 
         // Grab all files ending in .json
-        string[] files = Directory.GetFiles(folderPath, "*.json");
+        DirectoryInfo info = new DirectoryInfo(folderPath);
 
-        jsonFiles.Clear();
-        jsonFiles.AddRange(files);
+        //Sort by LastWriteTime (Newest to Oldest)
+        var sortedFiles = isSortByName ?
+            info.GetFiles("*.json")
+            .OrderByDescending(f => f.Name)
+            .ToList()
+            :
+            info.GetFiles("*.json")
+            .OrderByDescending(f => f.LastWriteTime)
+            .ToList();
 
         string debugAccumulator = "";
 
-        for (int i = 0; i < jsonFiles.Count; i++)
+        for (int i = 0; i < sortedFiles.Count; i++)
         {
             try
             {
-                // Safety Check: is the file actually there?
-                if (!File.Exists(jsonFiles[i])) continue;
-
-                string jsonContent = File.ReadAllText(jsonFiles[i]);
+                string jsonContent = File.ReadAllText(sortedFiles[i].FullName);
                 TrajectorySession logData = JsonUtility.FromJson<TrajectorySession>(jsonContent);
 
                 if (logData == null) continue;
 
-                string cleanFileName = Path.GetFileName(jsonFiles[i]);
+                string cleanFileName = sortedFiles[i].Name;
+
                 debugAccumulator += $"{i}. {cleanFileName}\n";
 
                 ReplayDataContainer _c = Instantiate(jsonPrefab, content);
@@ -92,12 +100,12 @@ public class ReplayManager : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Loop failed at index {i} ({jsonFiles[i]}): {e.Message}");
-                debugAccumulator += $"{i}. ERROR: {e.ToString()}\n";
+                // This was likely catching the error and stopping the spawn without you noticing
+                Debug.LogError($"Loop failed at index {i}: {e.Message}");
             }
         }
 
-        //if (loggingTxt != null) loggingTxt.text = debugAccumulator;
+        if (loggingTxt != null) loggingTxt.text = debugAccumulator;
     }
 
     public void SpawnReplay(ReplayData savedData, Vector3 savedOffset)
