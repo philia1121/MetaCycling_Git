@@ -150,7 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: Head
   nameText: {fileID: 1428705447041624057}
-  isDisplayName: 0
+  isDisplayName: 1
 --- !u!1 &4971035940130241689
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,7 +347,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6fe3fcd960305e541b9c41b189c10e04, type: 2}
+  - {fileID: 2100000, guid: 220a097f4b7930445802835871ecb18f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
