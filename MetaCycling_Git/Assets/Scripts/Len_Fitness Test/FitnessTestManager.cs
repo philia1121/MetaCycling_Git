@@ -211,6 +211,8 @@ public class FitnessTestManager : MonoBehaviour
         hmdColl = trackedGameObject.GetComponent<SphereCollider>();
         if( hmdColl != null )
             hmdColl.radius = toleranceDist;
+
+        calibratedStartPos = new Vector3(hmdGameObject.transform.position.x, 0, hmdGameObject.transform.position.z);
     }
 
     private void Update()

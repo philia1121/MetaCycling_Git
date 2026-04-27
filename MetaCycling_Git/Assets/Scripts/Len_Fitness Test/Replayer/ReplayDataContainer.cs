@@ -39,7 +39,7 @@ public class ReplayDataContainer : MonoBehaviour
             string hh = timePart.Substring(0, 2);
             string min = timePart.Substring(2, 2);
 
-            disptxt.text = $"{name} - {mm}/{dd} - {hh}:{min} ({session.waypoints.Count})";
+            disptxt.text = $"{name} - {mm}/{dd} - {hh}:{min} ({session.waypoints.Count*0.015f}s)";
         }
 
         //just in case
