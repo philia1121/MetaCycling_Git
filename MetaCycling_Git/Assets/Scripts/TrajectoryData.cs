@@ -1,45 +1,55 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Firebase.Firestore;
 using UnityEngine;
+using Firebase.Extensions;
 
+[FirestoreData]
 [System.Serializable]
 public class MultiTrackWaypoint
 {
-    public float timestamp;
+    public MultiTrackWaypoint() { }
+    [FirestoreProperty] public float timestamp { get; set; }
 
     // Left Controller
-    public Vector3 pos_LCont;
-    public Quaternion rot_LCont;
+    [FirestoreProperty] public Vector3 pos_LCont { get; set; }
+    [FirestoreProperty] public Quaternion rot_LCont { get; set; }
 
     // Right Controller
-    public Vector3 pos_RCont;
-    public Quaternion rot_RCont;
+    [FirestoreProperty] public Vector3 pos_RCont { get; set; }
+    [FirestoreProperty] public Quaternion rot_RCont { get; set; }
 
     // Left Hand
-    public Vector3 pos_LHand;
-    public Quaternion rot_LHand;
+    [FirestoreProperty] public Vector3 pos_LHand { get; set; }
+    [FirestoreProperty] public Quaternion rot_LHand { get; set; }
 
     // Right Hand
-    public Vector3 pos_RHand;
-    public Quaternion rot_RHand;
+    [FirestoreProperty] public Vector3 pos_RHand { get; set; }
+    [FirestoreProperty] public Quaternion rot_RHand { get; set; }
 
     // HMD
-    public Vector3 pos_HMD;
-    public Quaternion rot_HMD;
+    [FirestoreProperty] public Vector3 pos_HMD { get; set; }
+    [FirestoreProperty] public Quaternion rot_HMD { get; set; }
 
-    public bool RHand_PosTracked;
-    public bool RHand_RotTracked;
-    public bool RCont_PosTracked;
-    public bool RCont_RotTracked;
-    public bool LHand_PosTracked;
-    public bool LHand_RotTracked;
-    public bool LCont_PosTracked;
-    public bool LCont_RotTracked;
+    [FirestoreProperty] public bool RHand_PosTracked { get; set; }
+    [FirestoreProperty] public bool RHand_RotTracked { get; set; }
+    [FirestoreProperty] public bool RCont_PosTracked { get; set; }
+    [FirestoreProperty] public bool RCont_RotTracked { get; set; }
+    [FirestoreProperty] public bool LHand_PosTracked { get; set; }
+    [FirestoreProperty] public bool LHand_RotTracked { get; set; }
+    [FirestoreProperty] public bool LCont_PosTracked { get; set; }
+    [FirestoreProperty] public bool LCont_RotTracked { get; set; }
 }
 
+[FirestoreData]
 [System.Serializable]
 public class TrajectorySession
 {
-    public List<MultiTrackWaypoint> waypoints = new List<MultiTrackWaypoint>();
+    public TrajectorySession() { }
+    [FirestoreProperty] public string userName { get; set; } = "";
+    [FirestoreProperty] public string motionType { get; set; } = "";
+    [FirestoreProperty] public List<MultiTrackWaypoint> waypoints { get; set; } = new List<MultiTrackWaypoint>();
 }
+
+

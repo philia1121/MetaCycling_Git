@@ -2,7 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Text;
 using UnityEngine.InputSystem;
+using System.Net;
+using Firebase.Firestore;
+using System.Threading.Tasks;
+using Firebase.Extensions;
+using Palmmedia.ReportGenerator.Core.Parser.Analysis;
 public class TrajectoryRecorder : MonoBehaviour
 {
     public float recordInterval = 0.015f;
@@ -19,6 +25,8 @@ public class TrajectoryRecorder : MonoBehaviour
     public static TrajectoryRecorder instance;
     string filePrefix = "MultiTraj";
 
+    private FirebaseFirestore db;
+
     void Awake()
     {
         if (instance == null)
@@ -28,6 +36,21 @@ public class TrajectoryRecorder : MonoBehaviour
         VRMainCam = Camera.main.transform;
         trackingInfo = FindFirstObjectByType<TrackingInfo>();
         if (!trackingInfo) trackingInfo = gameObject.AddComponent<TrackingInfo>();
+         
+        
+        // Initialize Firebase Firestore
+        Firebase.FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task => {
+            var dependencyStatus = task.Result;
+            if (dependencyStatus == Firebase.DependencyStatus.Available)
+            {
+                db = FirebaseFirestore.DefaultInstance;
+                Debug.Log("Firebase Firestore 已成功初始化。");
+            }
+            else
+            {
+                Debug.LogError($"無法解析 Firebase 依賴項: {dependencyStatus}");
+            }
+        });
     }
     void OnEnable()
     {
@@ -130,18 +153,57 @@ public class TrajectoryRecorder : MonoBehaviour
 
         currentSession.waypoints.Add(wp);
     }
-    void SaveToFile()
+    public void SaveToFile()
     {
         string json = JsonUtility.ToJson(currentSession, true);
-        string path = Path.Combine(Application.persistentDataPath, $"{filePrefix}_{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}.json");
+        string name = $"{filePrefix}_{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}.json";
+        string path = Path.Combine(Application.persistentDataPath, name);
         File.WriteAllText(path, json);
         Debug.Log($"File saved at : {path}");
+
+        UploadSessionToFirestore(json);
     }
+    void UploadSessionToFirestore(string data)
+    {
+        Debug.Log("1");
+        if (db == null)
+        {
+            Debug.LogError("Firestore 尚未初始化！無法上傳。");
+            return;
+        }
+        Debug.Log("2");
+
+        CollectionReference sessionCollection = db.Collection("trajectorySessions");
+        DocumentReference docRef = sessionCollection.Document();
+        Debug.Log("3");
+
+        TestData myData = new TestData();
+        myData.num = Random.Range(0, 100);
+        docRef.SetAsync(data).ContinueWithOnMainThread(task =>
+        {
+            Debug.Log("yes");
+            if (task.IsCompletedSuccessfully)
+            {
+                Debug.Log($"會話數據成功上傳到 Firestore。文檔 ID: {docRef.Id}");
+            }
+            else if (task.IsFaulted)
+            {
+                Debug.LogError($"上傳會話數據失敗: {task.Exception}");
+            }
+        });
+        Debug.Log("4");
+    }
+
     public void SetFilePrefix(string prefix)
     {
         if (prefix == null) return;
         filePrefix = prefix;
     }
-    public string GetFilePrefix(){ return filePrefix; }
+    public string GetFilePrefix() { return filePrefix; }
+    public void SetMotionType(string motion)
+    {
+        if (motion == null) return;
+        currentSession.motionType = motion;
+    }
 
 }
