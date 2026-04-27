@@ -58,5 +58,7 @@ public class FrontFloatyUI : MonoBehaviour
         Vector3 relativeOffset = vrCamera.TransformDirection(offset);
 
         targetPosition = basePt + relativeOffset;
+        transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * smoothSpeed);
+
     }
 }

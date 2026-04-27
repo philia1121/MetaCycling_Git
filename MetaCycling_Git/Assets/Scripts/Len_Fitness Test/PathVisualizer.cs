@@ -6,7 +6,7 @@
 public class PathVisualizer : MonoBehaviour
 {
     public static PathVisualizer instance;
-    private bool isRecording;
+    public bool isRecording { get; private set; }
 
     [SerializeField] private float interval;
     [SerializeField] private float playbackSpeed = 1f;
@@ -25,6 +25,9 @@ public class PathVisualizer : MonoBehaviour
     [SerializeField] private Transform hmdGhost;
     [SerializeField] private Transform lHandGhost;
     [SerializeField] private Transform rHandGhost;
+
+    [Header("mesh")]
+    [SerializeField] private GameObject[] disableMesh;
 
     [Header("Cone")]
     [SerializeField] private Transform PlaybackTrail;
@@ -229,7 +232,14 @@ public class PathVisualizer : MonoBehaviour
         if (windowSize < 0)
         {
             for (int i = 0; i < list.Count; i++)
-                if (list[i] != null) list[i].SetActive(true);
+            {
+                if (list[i] != null)
+                {
+                    // Show based on density (casting density to int if it's a float)
+                    bool matchesDensity = (i % pathDensity == 0);
+                    list[i].SetActive(matchesDensity);
+                }
+            }
             return;
         }
 
@@ -241,13 +251,15 @@ public class PathVisualizer : MonoBehaviour
 
         for (int i = 0; i < list.Count; i++)
         {
-            bool shouldBeActive = (i >= start && i <= end);
+            bool isInWindow = (i >= start && i <= end);
+            bool matchesDensity = (i % pathDensity == 0) || (i == currentIndex);
 
-            if (list[i].activeSelf != shouldBeActive)
+            bool shouldBeActive = isInWindow && matchesDensity;
+
+            if (list[i] != null && list[i].activeSelf != shouldBeActive)
             {
                 list[i].SetActive(shouldBeActive);
             }
-
         }
     }
 
@@ -354,7 +366,7 @@ public class PathVisualizer : MonoBehaviour
         }
     }
 
-    public void PlaybackObjSetActive(bool active, bool ghost)
+    private void PlaybackObjSetActive(bool active, bool ghost)
     {
         hmdPlayback.gameObject.SetActive(active);
         lHandPlayback.gameObject.SetActive(active);
@@ -366,6 +378,16 @@ public class PathVisualizer : MonoBehaviour
         hmdGhost.gameObject.SetActive(active);
         lHandGhost.gameObject.SetActive(active);
         rHandGhost.gameObject.SetActive(active);
+    }
+
+    public void PlaybackMeshObjSetActive(bool active)
+    {
+        if (disableMesh.Length <= 0)
+            return;
+        foreach(GameObject g in disableMesh)
+        {
+            g.SetActive(active);
+        }
     }
 }
     

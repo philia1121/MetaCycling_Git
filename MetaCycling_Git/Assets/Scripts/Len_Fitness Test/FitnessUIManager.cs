@@ -56,7 +56,7 @@ public class FitnessUIManager : MonoBehaviour
     private ReplayManager m_replay;
 
     private bool isPlaying = false;
-    private bool isHidden = false;
+    private bool isHidden = true;
     private JumpResult jumpRes;
     private void Start()
     {
@@ -70,7 +70,7 @@ public class FitnessUIManager : MonoBehaviour
         barInfo.text = "";
         ActivateIcon("");
         sortListText.text = m_replay.isSortByName ? "name" : "time";
-        hideInfo.text = isHidden ? $"cubes disabled" : $"cubes enabled";
+        hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
 
         #region recording btn setup
         startBtn.onClick.AddListener(() => {
@@ -128,8 +128,8 @@ public class FitnessUIManager : MonoBehaviour
         hideBtn.onClick.AddListener(() =>
         {
             isHidden = !isHidden;
-            m_path.PlaybackObjSetActive(isHidden, true);
-            hideInfo.text = isHidden ? $"cubes disabled" : $"cubes enabled";
+            m_path.PlaybackMeshObjSetActive(isHidden);
+            hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
         });
 
         changeDisplayBtn.onClick.AddListener(()=> { m_path.DisplayTrailingPath();
