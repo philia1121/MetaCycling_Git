@@ -61,13 +61,14 @@ public class FitnessTestManager : MonoBehaviour
     private GameObject spawnedEndJumpPlane;
 
     //var for the calibrated start and end point
-    private Vector3 calibratedStartPos;
-    private Vector3 calibratedEndPos;
+    public Vector3 calibratedStartPos;
+    public Vector3 calibratedEndPos;
 
     TrajectoryRecorder trajectoryRecorder;
 
     ControlMap controlMap;
-    PathVisualizer path;
+    private PathVisualizer path;
+    public static FitnessTestManager instance;
 
     void Awake()
     {
@@ -76,10 +77,15 @@ public class FitnessTestManager : MonoBehaviour
         controlMap = new ControlMap();
         controlMap.Prototype.Enable();
 
+        if (instance == null)
+            instance = this;
+
+
         #region jump dist buttons and calc
         //spawn the planes n calc
         controlMap.Prototype.Right_Trigger.started += ctx => 
         {
+            return;
             SpawnJumpPlane(ref spawnedStartJumpPlane, planePrefabStart);
 
             if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
@@ -91,6 +97,7 @@ public class FitnessTestManager : MonoBehaviour
 
         controlMap.Prototype.Right_Grip.started += ctx =>
         {
+            return;
             SpawnJumpPlane(ref spawnedEndJumpPlane, planePrefabEnd);
 
             if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
@@ -127,6 +134,7 @@ public class FitnessTestManager : MonoBehaviour
             path.EndRecording();
 
             path.DisplayPath();
+            etcTxt.text = "Displaying path";
         };
 
         #endregion
@@ -179,9 +187,6 @@ public class FitnessTestManager : MonoBehaviour
         controlMap.Prototype.Y.started += ctx =>
         {
             path.DisplayTrailingPath();
-            //float dist = CalcDist(hmdGameObject.transform.position, rightArmGameObject.transform.position);
-            //etcTxt.text = $"head to arm = {Mathf.Abs(dist) * 100} cm";
-            //path.DisplayPath();
         };
 
         controlMap.Prototype.Left_Grip.started += ctx => ClearTrackingData();
@@ -452,8 +457,11 @@ public class FitnessTestManager : MonoBehaviour
         return (MathF.Sqrt(sqDist));
     }
 
-    private void ClearTrackingData()
+    public void ClearTrackingData()
     {
+        if (isRecording)
+            return;
+
         posSamples.Clear();
         moveSamples.Clear();
         calibratedStartPos = Vector3.zero;
@@ -496,5 +504,83 @@ public class FitnessTestManager : MonoBehaviour
         }
         return (Vector3.zero, Quaternion.identity);
     }
+
+    public void StartMovement(Action<bool> onComplete)
+    {
+        StartCoroutine(CalibratePos(result =>
+        {
+            ClearTrackingData();
+
+            calibratedStartPos = result;
+            Debug.Log("Start Pos: " + result);
+            etcTxt.text = "start pos calibrated";
+            lastTrackedPos = result;
+
+            spawnedStartJumpPoint = CheckInstantiatedObject(spawnedStartJumpPoint, pointPrefabStart, new Vector3(result.x, 0, result.z), Quaternion.identity);
+
+            //add 1st pos
+            MotionPoint point = new MotionPoint
+            {
+                position = result,
+                rotation = trackedGameObject.transform.rotation,
+                timestamp = Time.time,
+                velocity = Vector3.zero
+            };
+
+            moveSamples.Add(point);
+            Record(true);
+
+            trajectoryRecorder.StartRecording();
+            path.StartRecording();
+
+            onComplete?.Invoke(true);
+            //basically call the function to record the movement,n/x
+            //so the track can be calc'd after the start point is calibrated
+        }));
+    }
+
+    public JumpResult EndMovement()
+    {
+        jumpedPos = Vector3.zero;
+        jumpedPos = trackedGameObject.transform.position;
+
+        spawnedEndJumpPoint = CheckInstantiatedObject(spawnedEndJumpPoint, pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
+
+        float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
+
+        float highestPoint = 0;
+        //float lowestPoint = 0;
+        foreach (var point in moveSamples)
+        {
+            if (point.position.y > highestPoint)
+                highestPoint = point.position.y;
+        }
+
+        jumpTxt.text = $"jumped {res * 100} cm, highest {(highestPoint - calibratedStartPos.y) * 100} cm";
+
+        //if still recording, end it
+        if (isRecording)
+            Record(false);
+
+        trajectoryRecorder.StopRecording();
+        path.EndRecording();
+
+        path.DisplayPath();
+        etcTxt.text = "Displaying path";
+
+        return new JumpResult
+        {
+            success = true,
+            distance = res * 100,
+            height = (highestPoint - calibratedStartPos.y) * 100
+        };
+    }
     
+}
+
+public struct JumpResult
+{
+    public bool success;
+    public float distance;
+    public float height;
 }
