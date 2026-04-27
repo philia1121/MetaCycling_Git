@@ -17,7 +17,8 @@ public class Uploader : MonoBehaviour
     void Awake()
     {
         // 檢查 Firebase App 的初始化狀態
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task => {
+        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+        {
             var dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
@@ -49,11 +50,12 @@ public class Uploader : MonoBehaviour
 
         TestData testData = new TestData
         {
-            num = 11,
+            num = 1355,
         };
         DocumentReference docRef = firestore.Document($"save_data/0");
 
-        docRef.SetAsync(testData).ContinueWithOnMainThread(task => {
+        docRef.SetAsync(testData).ContinueWithOnMainThread(task =>
+        {
             if (task.IsFaulted)
             {
                 Debug.LogError("寫入 Firestore 文件時發生錯誤: " + task.Exception);
