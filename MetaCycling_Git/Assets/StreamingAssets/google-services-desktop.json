@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "794154198341",
+    "firebase_url": "https://metacycling-d034c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "metacycling-d034c",
+    "storage_bucket": "metacycling-d034c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:794154198341:android:ea6e4199cebd55b6070a2c",
+        "android_client_info": {
+          "package_name": "com.JC_Express.MetaCycling_Test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDS7xV_vWzhQM8s5Pp7ye0aPjVZubdyGqY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
