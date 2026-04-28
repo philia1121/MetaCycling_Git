@@ -56,23 +56,23 @@ public class ReplayDataContainer : MonoBehaviour
             var wp = session.waypoints[i];
 
             // 1. Process HMD
-            if (wp.pos_HMD.sqrMagnitude > 0.001f)
+            if (wp.pos_HMD.ToVector3().sqrMagnitude > 0.001f)
             {
-                lastHmd = new MotionPointSimple { position = wp.pos_HMD, rotation = wp.rot_HMD };
+                lastHmd = new MotionPointSimple { position = wp.pos_HMD.ToVector3(), rotation = wp.rot_HMD.ToQuaternion() };
             }
             hmdMotionPoints.Add(lastHmd);
 
             // 2. Process Left Hand
-            if (wp.pos_LHand.sqrMagnitude > 0.001f)
+            if (wp.pos_LHand.ToVector3().sqrMagnitude > 0.001f)
             {
-                lastLHand = new MotionPointSimple { position = wp.pos_LHand, rotation = wp.rot_LHand };
+                lastLHand = new MotionPointSimple { position = wp.pos_LHand.ToVector3(), rotation = wp.rot_LHand.ToQuaternion() };
             }
             lHandMotionPoints.Add(lastLHand);
 
             // 3. Process Right Hand
-            if (wp.pos_RHand.sqrMagnitude > 0.001f)
+            if (wp.pos_RHand.ToVector3().sqrMagnitude > 0.001f)
             {
-                lastRHand = new MotionPointSimple { position = wp.pos_RHand, rotation = wp.rot_RHand };
+                lastRHand = new MotionPointSimple { position = wp.pos_RHand.ToVector3(), rotation = wp.rot_RHand.ToQuaternion() };
             }
             rHandMotionPoints.Add(lastRHand);
         }

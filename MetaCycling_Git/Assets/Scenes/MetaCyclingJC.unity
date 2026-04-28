@@ -6189,6 +6189,7 @@ MonoBehaviour:
   smoothSpeed: 3
   updateInterval: 1.5
   offset: {x: 0, y: 0.02, z: 0}
+  isFollow: 0
 --- !u!1 &322272910
 GameObject:
   m_ObjectHideFlags: 0
@@ -22052,6 +22053,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f92f191f24d8e1d459d681e873111806, type: 3}
+--- !u!114 &1335226215 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6662364494007049267, guid: f92f191f24d8e1d459d681e873111806, type: 3}
+  m_PrefabInstance: {fileID: 1335226214}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2c57f81239a45f499dffca140f1fea5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1335412444
 GameObject:
   m_ObjectHideFlags: 0
@@ -32045,6 +32057,7 @@ MonoBehaviour:
   smoothSpeed: 3
   updateInterval: 1.5
   offset: {x: 0, y: 0, z: 0}
+  isFollow: 0
 --- !u!1 &1812268075
 GameObject:
   m_ObjectHideFlags: 0
@@ -36378,8 +36391,6 @@ GameObject:
   m_Component:
   - component: {fileID: 2089772964}
   - component: {fileID: 2089772966}
-  - component: {fileID: 2089772965}
-  - component: {fileID: 2089772967}
   m_Layer: 0
   m_Name: HotKey
   m_TagString: Untagged
@@ -36402,18 +36413,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2089772965
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2089772962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33fc9ff4e9c8426468f52d01c5f54ff6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &2089772966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36431,9 +36430,9 @@ MonoBehaviour:
   HotKeyEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2089772965}
-        m_TargetAssemblyTypeName: Uploader, Assembly-CSharp
-        m_MethodName: SaveToBase
+      - m_Target: {fileID: 1335226215}
+        m_TargetAssemblyTypeName: TrajectoryRecorder, Assembly-CSharp
+        m_MethodName: ToggleRecording
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -36443,18 +36442,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &2089772967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2089772962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4f3af4ea4b384941ba3baa3a286c192, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &2090372306
 GameObject:
   m_ObjectHideFlags: 0

@@ -123,23 +123,23 @@ public class TrajectoryRecorder : MonoBehaviour
         wp.timestamp = timeSinceStart;
 
         // Left Controller
-        wp.pos_LCont = OVRInput.GetLocalControllerPosition(OVRInput.Controller.LTouch);
-        wp.rot_LCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LTouch);
+        wp.pos_LCont = new SerializableVector3(OVRInput.GetLocalControllerPosition(OVRInput.Controller.LTouch));
+        wp.rot_LCont = new SerializableQuaternion(OVRInput.GetLocalControllerRotation(OVRInput.Controller.LTouch));
 
         // Right Controller
-        wp.pos_RCont = OVRInput.GetLocalControllerPosition(OVRInput.Controller.RTouch);
-        wp.rot_RCont = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RTouch);
+        wp.pos_RCont = new SerializableVector3(OVRInput.GetLocalControllerPosition(OVRInput.Controller.RTouch));
+        wp.rot_RCont = new SerializableQuaternion(OVRInput.GetLocalControllerRotation(OVRInput.Controller.RTouch));
         // Left Hand
-        wp.pos_LHand = OVRInput.GetLocalControllerPosition(OVRInput.Controller.LHand);
-        wp.rot_LHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.LHand);
+        wp.pos_LHand = new SerializableVector3(OVRInput.GetLocalControllerPosition(OVRInput.Controller.LHand));
+        wp.rot_LHand = new SerializableQuaternion(OVRInput.GetLocalControllerRotation(OVRInput.Controller.LHand));
 
         // Right Hand
-        wp.pos_RHand = OVRInput.GetLocalControllerPosition(OVRInput.Controller.RHand);
-        wp.rot_RHand = OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand);
+        wp.pos_RHand = new SerializableVector3(OVRInput.GetLocalControllerPosition(OVRInput.Controller.RHand));
+        wp.rot_RHand = new SerializableQuaternion(OVRInput.GetLocalControllerRotation(OVRInput.Controller.RHand));
 
         // HMD
-        wp.pos_HMD = VRMainCam.position;
-        wp.rot_HMD = VRMainCam.rotation;
+        wp.pos_HMD = new SerializableVector3(VRMainCam.position);
+        wp.rot_HMD = new SerializableQuaternion(VRMainCam.rotation);
 
         // Tracking State
         wp.RHand_PosTracked = trackingInfo.Get_RHand_PosTracked();
@@ -161,27 +161,21 @@ public class TrajectoryRecorder : MonoBehaviour
         File.WriteAllText(path, json);
         Debug.Log($"File saved at : {path}");
 
-        UploadSessionToFirestore(json);
+        UploadSessionToFirestore(currentSession, name);
     }
-    void UploadSessionToFirestore(string data)
+    void UploadSessionToFirestore<T>(T dataObject, string fileName)
     {
-        Debug.Log("1");
         if (db == null)
         {
             Debug.LogError("Firestore 尚未初始化！無法上傳。");
             return;
         }
-        Debug.Log("2");
 
         CollectionReference sessionCollection = db.Collection("trajectorySessions");
-        DocumentReference docRef = sessionCollection.Document();
-        Debug.Log("3");
+        DocumentReference docRef = sessionCollection.Document(fileName);
 
-        TestData myData = new TestData();
-        myData.num = Random.Range(0, 100);
-        docRef.SetAsync(data).ContinueWithOnMainThread(task =>
+        docRef.SetAsync(dataObject).ContinueWithOnMainThread(task =>
         {
-            Debug.Log("yes");
             if (task.IsCompletedSuccessfully)
             {
                 Debug.Log($"會話數據成功上傳到 Firestore。文檔 ID: {docRef.Id}");
@@ -191,7 +185,6 @@ public class TrajectoryRecorder : MonoBehaviour
                 Debug.LogError($"上傳會話數據失敗: {task.Exception}");
             }
         });
-        Debug.Log("4");
     }
 
     public void SetFilePrefix(string prefix)
