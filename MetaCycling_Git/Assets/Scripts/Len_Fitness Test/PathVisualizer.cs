@@ -2,15 +2,15 @@
     using System.Collections;
     using System.Collections.Generic;
     using UnityEngine;
-    using static UnityEngine.GraphicsBuffer;
 
 public class PathVisualizer : MonoBehaviour
 {
     public static PathVisualizer instance;
-    private bool isRecording;
+    public bool isRecording { get; private set; }
 
     [SerializeField] private float interval;
     [SerializeField] private float playbackSpeed = 1f;
+    public float speedMult = 1f;
 
     [Header("GameObject Refs")]
     public Transform HMD_Transform;
@@ -25,6 +25,9 @@ public class PathVisualizer : MonoBehaviour
     [SerializeField] private Transform hmdGhost;
     [SerializeField] private Transform lHandGhost;
     [SerializeField] private Transform rHandGhost;
+
+    [Header("mesh")]
+    [SerializeField] private GameObject[] disableMesh;
 
     [Header("Cone")]
     [SerializeField] private Transform PlaybackTrail;
@@ -44,9 +47,9 @@ public class PathVisualizer : MonoBehaviour
     [Range(1, 4)]
     [SerializeField] private int pathDensity = 1;
 
-    private List<MotionPointSimple> hmdMotionPoints;
-    private List<MotionPointSimple> rHandMotionPoints;
-    private List<MotionPointSimple> lHandMotionPoints;
+    public List<MotionPointSimple> hmdMotionPoints;
+    public List<MotionPointSimple> rHandMotionPoints;
+    public List<MotionPointSimple> lHandMotionPoints;
 
     private List<GameObject> hmdMotionPath;
     private List<GameObject> rHandMotionPath;
@@ -153,6 +156,7 @@ public class PathVisualizer : MonoBehaviour
         else if (displayID == 3)
         {
             isDisplayingTrailingPath = false;
+            displayAmount = 0;
             HideAllMarkers();
             Debug.Log("Mode: Hide All");
         }
@@ -215,55 +219,82 @@ public class PathVisualizer : MonoBehaviour
 
     private void ActivateHiddenMarker(List<GameObject> list, int currentIndex, int windowSize)
     {
-        if (!isDisplayingTrailingPath)
+        if (displayID == 3 || !isDisplayingTrailingPath)
         {
-            foreach (GameObject g in list) g.SetActive(false);
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null && list[i].activeSelf)
+                    list[i].SetActive(false);
+            }
+            return;
+        }
+
+        if (windowSize < 0)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null)
+                {
+                    // Show based on density (casting density to int if it's a float)
+                    bool matchesDensity = (i % pathDensity == 0);
+                    list[i].SetActive(matchesDensity);
+                }
+            }
             return;
         }
 
         //view certain numbers
-        int start = (windowSize < 0) ? 0 : currentIndex - windowSize;
+        bool isRewinding = speedMult < 0;
+        int start = isRewinding ? currentIndex : Mathf.Max(0, currentIndex - windowSize);
+        int end = isRewinding ? Mathf.Min(list.Count - 1, currentIndex + windowSize) : currentIndex;
+
 
         for (int i = 0; i < list.Count; i++)
         {
-            bool isInWindow = (windowSize < 0) || (i >= start && i <= currentIndex);
-            bool matchesDensity = (i % pathDensity == 0);
+            bool isInWindow = (i >= start && i <= end);
+            bool matchesDensity = (i % pathDensity == 0) || (i == currentIndex);
+
             bool shouldBeActive = isInWindow && matchesDensity;
 
             if (list[i] != null && list[i].activeSelf != shouldBeActive)
             {
                 list[i].SetActive(shouldBeActive);
             }
-
         }
     }
 
     private IEnumerator PlayPathLoop(List<MotionPointSimple> path, List<GameObject> motionPath, Transform target, LineRenderer line)
     {
+        float _play = 0f; //serves as the pointer on what's playing now
+        float _totPts = path.Count - 1;
+
         while (true) // loop forever
         {
-            for (int i = 0; i < path.Count - 1; i++)
+            _play += Time.deltaTime * ((1/interval)*.5f) * speedMult; //only change speedMult so it dont fuck up anything
+
+            //clamp playhead
+            if (_play > _totPts) _play = 0;
+            if (_play < 0) _play = _totPts;
+
+            int currentIndex = Mathf.FloorToInt(_play);
+            int nextIndex = (currentIndex + 1) % path.Count;
+
+            float t = _play - currentIndex; // The fractional part (0.0 to 1.0)
+
+            // Apply Movement
+            target.position = Vector3.Lerp(path[currentIndex].position, path[nextIndex].position, t);
+            target.rotation = Quaternion.Slerp(path[currentIndex].rotation, path[nextIndex].rotation, t);
+
+            // Update visuals
+            currentPlaybackIndex = currentIndex;
+            UpdateLine(line, path, currentIndex, displayAmount);
+
+            if (motionPath != null && motionPath.Count > 0)
             {
-                MotionPointSimple start = path[i];
-                MotionPointSimple end = path[i + 1];
-
-                currentPlaybackIndex = i;
-
-                if (motionPath != null) ActivateHiddenMarker(motionPath, i, displayAmount);
-                UpdateLine(line, path, i, displayAmount);
-
-                float t = 0f;
-
-                while (t < 1f)
-                {
-                    t += Time.deltaTime * playbackSpeed;
-
-                    target.position = Vector3.Lerp(start.position, end.position, t);
-                    target.rotation = Quaternion.Slerp(start.rotation, end.rotation, t);
-
-                    yield return null;
-                }
+                ActivateHiddenMarker(motionPath, currentIndex, displayAmount);
             }
+
+            yield return null;
         }
     }
 
@@ -276,21 +307,22 @@ public class PathVisualizer : MonoBehaviour
         {
             line.positionCount = points.Count;
             for (int i = 0; i < points.Count; i++)
-            {
                 line.SetPosition(i, points[i].position);
-            }
+            return;
         }
-        // Mode: Trailing Tail
-        else
-        {
-            int start = Mathf.Max(0, currentIndex - windowSize);
-            int count = currentIndex - start + 1;
 
-            line.positionCount = count;
-            for (int i = 0; i < count; i++)
-            {
-                line.SetPosition(i, points[start + i].position);
-            }
+        // Mode: Trailing Tail
+        bool isRewinding = speedMult < 0;
+
+        int start = isRewinding ? currentIndex : Mathf.Max(0, currentIndex - windowSize);
+        int end = isRewinding ? Mathf.Min(points.Count - 1, currentIndex + windowSize) : currentIndex;
+
+        int count = end - start + 1;
+        line.positionCount = count;
+
+        for (int i = 0; i < count; i++)
+        {
+            line.SetPosition(i, points[start + i].position);
         }
     }
 
@@ -346,6 +378,16 @@ public class PathVisualizer : MonoBehaviour
         hmdGhost.gameObject.SetActive(active);
         lHandGhost.gameObject.SetActive(active);
         rHandGhost.gameObject.SetActive(active);
+    }
+
+    public void PlaybackMeshObjSetActive(bool active)
+    {
+        if (disableMesh.Length <= 0)
+            return;
+        foreach(GameObject g in disableMesh)
+        {
+            g.SetActive(active);
+        }
     }
 }
     
