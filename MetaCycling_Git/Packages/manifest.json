@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "com.google.external-dependency-manager": "file:C:/Users/j1921/Downloads/com.google.external-dependency-manager-1.2.187.tgz",
+    "com.google.firebase.app": "file:C:/Users/j1921/Downloads/com.google.firebase.app-13.6.0.tgz",
+    "com.google.firebase.firestore": "file:C:/Users/j1921/Downloads/com.google.firebase.firestore-13.6.0.tgz",
     "com.mackysoft.serializereference-extensions": "https://github.com/mackysoft/Unity-SerializeReferenceExtensions.git?path=Assets/MackySoft/MackySoft.SerializeReferenceExtensions",
     "com.meta.xr.sdk.core": "72.0.0",
     "com.meta.xr.sdk.interaction.ovr": "83.0.1",
