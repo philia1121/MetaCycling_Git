@@ -97,3 +97,22 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+MetaCycling_Git/Assets/Firebase.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.6.0.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.6.0/firebase-app-unity-13.6.0.aar
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.6.0/firebase-app-unity-13.6.0.aar.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.6.0/firebase-app-unity-13.6.0.pom
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-app-unity/13.6.0/firebase-app-unity-13.6.0.pom.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.6.0.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.6.0/firebase-firestore-unity-13.6.0.aar
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.6.0/firebase-firestore-unity-13.6.0.aar.meta
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.6.0/firebase-firestore-unity-13.6.0.pom
+MetaCycling_Git/Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-firestore-unity/13.6.0/firebase-firestore-unity-13.6.0.pom.meta

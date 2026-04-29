@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TrajectoryRecorder_Config : MonoBehaviour
 {
-    [SerializeField] private bool setOnAwake = true;
+    [SerializeField] private bool setOnAwake = false;
     [SerializeField] private NamingType namingType = NamingType.Custom;
     [SerializeField] private string filePrefix = "MultiTraj";
     [SerializeField] private string MotionType = "Undefined";
@@ -20,7 +20,7 @@ public class TrajectoryRecorder_Config : MonoBehaviour
                 fPrefix = (filePrefix == null) ? "" : filePrefix;
                 break;
             case NamingType.TimeLog:
-                fPrefix = System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+                fPrefix = System.DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
                 break;
             case NamingType.Guid:
                 fPrefix = System.Guid.NewGuid().ToString();

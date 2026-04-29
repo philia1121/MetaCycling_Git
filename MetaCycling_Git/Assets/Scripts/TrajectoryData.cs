@@ -13,24 +13,24 @@ public class MultiTrackWaypoint
     [FirestoreProperty] public float timestamp { get; set; }
 
     // Left Controller
-    [FirestoreProperty] public Vector3 pos_LCont { get; set; }
-    [FirestoreProperty] public Quaternion rot_LCont { get; set; }
+    [FirestoreProperty] public SerializableVector3 pos_LCont { get; set; }
+    [FirestoreProperty] public SerializableQuaternion rot_LCont { get; set; }
 
     // Right Controller
-    [FirestoreProperty] public Vector3 pos_RCont { get; set; }
-    [FirestoreProperty] public Quaternion rot_RCont { get; set; }
+    [FirestoreProperty] public SerializableVector3 pos_RCont { get; set; }
+    [FirestoreProperty] public SerializableQuaternion rot_RCont { get; set; }
 
     // Left Hand
-    [FirestoreProperty] public Vector3 pos_LHand { get; set; }
-    [FirestoreProperty] public Quaternion rot_LHand { get; set; }
+    [FirestoreProperty] public SerializableVector3 pos_LHand { get; set; }
+    [FirestoreProperty] public SerializableQuaternion rot_LHand { get; set; }
 
     // Right Hand
-    [FirestoreProperty] public Vector3 pos_RHand { get; set; }
-    [FirestoreProperty] public Quaternion rot_RHand { get; set; }
+    [FirestoreProperty] public SerializableVector3 pos_RHand { get; set; }
+    [FirestoreProperty] public SerializableQuaternion rot_RHand { get; set; }
 
     // HMD
-    [FirestoreProperty] public Vector3 pos_HMD { get; set; }
-    [FirestoreProperty] public Quaternion rot_HMD { get; set; }
+    [FirestoreProperty] public SerializableVector3 pos_HMD { get; set; }
+    [FirestoreProperty] public SerializableQuaternion rot_HMD { get; set; }
 
     [FirestoreProperty] public bool RHand_PosTracked { get; set; }
     [FirestoreProperty] public bool RHand_RotTracked { get; set; }
@@ -52,4 +52,48 @@ public class TrajectorySession
     [FirestoreProperty] public List<MultiTrackWaypoint> waypoints { get; set; } = new List<MultiTrackWaypoint>();
 }
 
+[FirestoreData]
+[System.Serializable]
+public class SerializableVector3
+{
+    public float x;
+    public float y;
+    public float z;
+    public SerializableVector3() { }
+
+    public SerializableVector3(Vector3 rValue)
+    {
+        x = rValue.x;
+        y = rValue.y;
+        z = rValue.z;
+    }
+
+    public Vector3 ToVector3()
+    {
+        return new Vector3(x, y, z);
+    }
+}
+
+[FirestoreData]
+[System.Serializable]
+public class SerializableQuaternion
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+    public SerializableQuaternion(){}
+    public SerializableQuaternion(Quaternion rValue)
+    {
+        x = rValue.x;
+        y = rValue.y;
+        z = rValue.z;
+        w = rValue.w;
+    }
+
+    public Quaternion ToQuaternion()
+    {
+        return new Quaternion(x, y, z, w);
+    }
+}
 
