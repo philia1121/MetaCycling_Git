@@ -1,13 +1,13 @@
 {
   "dependencies": {
     "com.google.external-dependency-manager": {
-      "version": "file:C:/Users/j1921/Downloads/com.google.external-dependency-manager-1.2.187.tgz",
+      "version": "file:../Assets/FirebaseRequirement/com.google.external-dependency-manager-1.2.187.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {}
     },
     "com.google.firebase.app": {
-      "version": "file:C:/Users/j1921/Downloads/com.google.firebase.app-13.6.0.tgz",
+      "version": "file:../Assets/FirebaseRequirement/com.google.firebase.app-13.6.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {
@@ -15,7 +15,7 @@
       }
     },
     "com.google.firebase.firestore": {
-      "version": "file:C:/Users/j1921/Downloads/com.google.firebase.firestore-13.6.0.tgz",
+      "version": "file:../Assets/FirebaseRequirement/com.google.firebase.firestore-13.6.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {
