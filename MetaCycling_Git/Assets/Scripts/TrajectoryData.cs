@@ -5,75 +5,109 @@ using Firebase.Firestore;
 using UnityEngine;
 using Firebase.Extensions;
 
-[FirestoreData]
+#region AOS
+// AoS, the old version of JSON data structure
 [System.Serializable]
 public class MultiTrackWaypoint
 {
-    public MultiTrackWaypoint() { }
-    [FirestoreProperty] public float timestamp { get; set; }
+    public MultiTrackWaypoint(){}
+    public double timestamp;
 
     // Left Controller
-    [FirestoreProperty] public SerializableVector3 pos_LCont { get; set; }
-    [FirestoreProperty] public SerializableQuaternion rot_LCont { get; set; }
+    public SerializableVector3 pos_LCont;
+    public SerializableQuaternion rot_LCont;
 
     // Right Controller
-    [FirestoreProperty] public SerializableVector3 pos_RCont { get; set; }
-    [FirestoreProperty] public SerializableQuaternion rot_RCont { get; set; }
+    public SerializableVector3 pos_RCont;
+    public SerializableQuaternion rot_RCont;
 
     // Left Hand
-    [FirestoreProperty] public SerializableVector3 pos_LHand { get; set; }
-    [FirestoreProperty] public SerializableQuaternion rot_LHand { get; set; }
+    public SerializableVector3 pos_LHand;
+    public SerializableQuaternion rot_LHand;
 
     // Right Hand
-    [FirestoreProperty] public SerializableVector3 pos_RHand { get; set; }
-    [FirestoreProperty] public SerializableQuaternion rot_RHand { get; set; }
+    public SerializableVector3 pos_RHand;
+    public SerializableQuaternion rot_RHand;
 
     // HMD
-    [FirestoreProperty] public SerializableVector3 pos_HMD { get; set; }
-    [FirestoreProperty] public SerializableQuaternion rot_HMD { get; set; }
+    public SerializableVector3 pos_HMD;
+    public SerializableQuaternion rot_HMD;
 
-    [FirestoreProperty] public bool RHand_PosTracked { get; set; }
-    [FirestoreProperty] public bool RHand_RotTracked { get; set; }
-    [FirestoreProperty] public bool RCont_PosTracked { get; set; }
-    [FirestoreProperty] public bool RCont_RotTracked { get; set; }
-    [FirestoreProperty] public bool LHand_PosTracked { get; set; }
-    [FirestoreProperty] public bool LHand_RotTracked { get; set; }
-    [FirestoreProperty] public bool LCont_PosTracked { get; set; }
-    [FirestoreProperty] public bool LCont_RotTracked { get; set; }
+    public bool RHand_PosTracked;
+    public bool RHand_RotTracked;
+    public bool RCont_PosTracked;
+    public bool RCont_RotTracked;
+    public bool LHand_PosTracked;
+    public bool LHand_RotTracked;
+    public bool LCont_PosTracked;
+    public bool LCont_RotTracked;
 }
-
-[FirestoreData]
 [System.Serializable]
 public class TrajectorySession
 {
-    public TrajectorySession() { }
+    public TrajectorySession(){}
+    public string userName;
+    public string motionType;
+    public List<MultiTrackWaypoint> waypoints = new List<MultiTrackWaypoint>();
+}
+#endregion
+
+#region SoA
+// SoA, the new version of JSON data structure
+[FirestoreData]
+[System.Serializable]
+public class FireRecordData
+{
+    public FireRecordData() { }
     [FirestoreProperty] public string userName { get; set; } = "";
     [FirestoreProperty] public string motionType { get; set; } = "";
-    [FirestoreProperty] public List<MultiTrackWaypoint> waypoints { get; set; } = new List<MultiTrackWaypoint>();
-}
+    [FirestoreProperty] public string recordTime { get; set; } = "";
+    [FirestoreProperty] public float sampleInterval { get; set; } = 0.015f;
 
+    [FirestoreProperty] public List<double> timeStamp { get; set; } = new List<double>();
+    [FirestoreProperty] public List<SerializableVector3> pHDM { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableQuaternion> rHMD { get; set; } = new List<SerializableQuaternion>();
+    [FirestoreProperty] public List<SerializableVector3> pRH { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableQuaternion> rRH { get; set; } = new List<SerializableQuaternion>();
+    [FirestoreProperty] public List<SerializableVector3> pLH { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableQuaternion> rLH { get; set; } = new List<SerializableQuaternion>();
+    [FirestoreProperty] public List<SerializableVector3> pRC { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableQuaternion> rRC { get; set; } = new List<SerializableQuaternion>();
+    [FirestoreProperty] public List<SerializableVector3> pLC { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableQuaternion> rLC { get; set; } = new List<SerializableQuaternion>();
+    [FirestoreProperty] public List<bool> ptRH { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> rtRH { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> ptLH { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> rtLH { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> ptRC { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> rtRC { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> ptLC { get; set; } = new List<bool>();
+    [FirestoreProperty] public List<bool> rtLC { get; set; } = new List<bool>();
+}
+#endregion
+
+#region  JSON Serializable
 [FirestoreData]
 [System.Serializable]
 public class SerializableVector3
 {
-    public float x;
-    public float y;
-    public float z;
+    public double x;
+    public double y;
+    public double z;
     public SerializableVector3() { }
 
     public SerializableVector3(Vector3 rValue)
     {
-        x = rValue.x;
-        y = rValue.y;
-        z = rValue.z;
+        x = Math.Round(rValue.x, 4);
+        y = Math.Round(rValue.y, 4);
+        z = Math.Round(rValue.z, 4);
     }
 
     public Vector3 ToVector3()
     {
-        return new Vector3(x, y, z);
+        return new Vector3((float)x, (float)y, (float)z);
     }
 }
-
 [FirestoreData]
 [System.Serializable]
 public class SerializableQuaternion
@@ -96,4 +130,4 @@ public class SerializableQuaternion
         return new Quaternion(x, y, z, w);
     }
 }
-
+#endregion
