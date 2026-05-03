@@ -42389,6 +42389,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PrefixSelector
       objectReference: {fileID: 0}
+    - target: {fileID: 7749091639342768692, guid: f1093413972a1b048ad744ab7a3175b7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
