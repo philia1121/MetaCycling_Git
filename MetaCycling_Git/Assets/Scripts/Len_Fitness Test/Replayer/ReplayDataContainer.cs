@@ -23,6 +23,7 @@ public class ReplayDataContainer : MonoBehaviour
     {
         if (_m == null)
             _m = _manager;
+        disptxt.text = $"{fileName} - ({session.waypoints.Count * 0.015f}s)";
 
         string rawName = fileName.Replace(".json", "");
         string[] parts = rawName.Split('_');
