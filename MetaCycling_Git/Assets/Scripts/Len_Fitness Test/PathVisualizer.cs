@@ -303,7 +303,7 @@ public class PathVisualizer : MonoBehaviour
         if (line == null || !useLines) return;
 
         // Mode: Show All
-        if (windowSize < 0)
+        if (windowSize <= 0)
         {
             line.positionCount = points.Count;
             for (int i = 0; i < points.Count; i++)

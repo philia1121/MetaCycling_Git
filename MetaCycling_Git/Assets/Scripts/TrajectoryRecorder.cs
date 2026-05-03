@@ -8,7 +8,7 @@ using System.Net;
 using Firebase.Firestore;
 using System.Threading.Tasks;
 using Firebase.Extensions;
-using Palmmedia.ReportGenerator.Core.Parser.Analysis;
+//using Palmmedia.ReportGenerator.Core.Parser.Analysis;
 public class TrajectoryRecorder : MonoBehaviour
 {
     public float recordInterval = 0.015f;

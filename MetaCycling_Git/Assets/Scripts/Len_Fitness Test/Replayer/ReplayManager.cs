@@ -8,7 +8,6 @@ using UnityEngine;
 
 public class ReplayManager : MonoBehaviour
 {
-    [SerializeField] private Transform scrollViewContainer;
     [SerializeField] private Transform content;
     [SerializeField] private ReplayDataContainer jsonPrefab;
 
