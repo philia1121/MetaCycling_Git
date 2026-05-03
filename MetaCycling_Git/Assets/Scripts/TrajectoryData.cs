@@ -62,7 +62,7 @@ public class FireRecordData
     [FirestoreProperty] public string userName { get; set; } = "";
     [FirestoreProperty] public string motionType { get; set; } = "";
     [FirestoreProperty] public string recordTime { get; set; } = "";
-    [FirestoreProperty] public float sampleInterval { get; set; } = 0.015f;
+    [FirestoreProperty] public double sampleInterval { get; set; } = 0.015f;
 
     [FirestoreProperty] public List<double> timeStamp { get; set; } = new List<double>();
     [FirestoreProperty] public List<SerializableVector3> pHDM { get; set; } = new List<SerializableVector3>();

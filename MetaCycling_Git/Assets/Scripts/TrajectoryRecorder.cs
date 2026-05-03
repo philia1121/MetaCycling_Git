@@ -134,7 +134,7 @@ public class TrajectoryRecorder : MonoBehaviour
         recordData.userName = m_user;
         recordData.motionType = m_motion;
         recordData.recordTime = $"{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}";
-        recordData.sampleInterval = recordInterval;
+        recordData.sampleInterval = Math.Round(recordInterval, 4);
     }
     void OnRecord()
     {
@@ -276,11 +276,15 @@ public class TrajectoryRecorder : MonoBehaviour
     {
         if (motion == null) return;
         m_motion = motion;
+        if (currentSession != null) currentSession.motionType = motion;
+        if (recordData != null) recordData.motionType = motion;
     }
     public void SetUserName(string name)
     {
         if (name == null) return;
         m_user = name;
+        if (currentSession != null) currentSession.userName= name;
+        if (recordData != null) recordData.userName = name;
     }
 
 }

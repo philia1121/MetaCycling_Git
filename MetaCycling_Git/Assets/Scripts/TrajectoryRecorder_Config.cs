@@ -40,4 +40,8 @@ public class TrajectoryRecorder_Config : MonoBehaviour
     {
         if (TrajectoryRecorder.instance) TrajectoryRecorder.instance.SetMotionType(motion);
     }
+    public void ChangeUserName(string name)
+    {
+        if (TrajectoryRecorder.instance) TrajectoryRecorder.instance.SetUserName(name);
+    }
 }

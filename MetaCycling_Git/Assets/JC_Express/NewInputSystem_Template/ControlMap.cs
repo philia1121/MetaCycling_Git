@@ -612,6 +612,39 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""One Modifier"",
+                    ""id"": ""146dfbe9-5053-4a49-9908-3ea43ec0e03b"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RecordButton"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""06c3f798-d124-4f42-a479-0eaa5a80b20f"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RecordButton"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""51477af7-f25d-438b-8299-da1c3d8bcf19"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RecordButton"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
                     ""id"": ""cd0d16c1-3f00-47b7-b122-da836b5263dc"",
                     ""path"": ""OneModifier"",
                     ""interactions"": """",
