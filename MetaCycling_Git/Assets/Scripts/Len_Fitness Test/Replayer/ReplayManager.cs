@@ -88,14 +88,16 @@ public class ReplayManager : MonoBehaviour
 
                 string cleanFileName = sortedFiles[i].Name;
 
-                debugAccumulator += $"{i}. {cleanFileName}\n";
+                debugAccumulator += $"{i}. {cleanFileName}";
 
                 ReplayDataContainer _c = Instantiate(jsonPrefab, content);
 
                 _c.transform.SetParent(content, false);
                 _c.transform.localScale = Vector3.one;
 
-                _c.SetData(this, cleanFileName, logData);
+                string count = _c.SetData(this, cleanFileName, logData);
+                debugAccumulator += count + "\n";
+
             }
             catch (System.Exception e)
             {

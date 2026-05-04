@@ -19,28 +19,27 @@ public class ReplayDataContainer : MonoBehaviour
         _m = ReplayManager.instance;
     }
 
-    public void SetData(ReplayManager _manager, string fileName,  TrajectorySession session)
+    public string SetData(ReplayManager _manager, string fileName,  TrajectorySession session)
     {
         if (_m == null)
             _m = _manager;
-        disptxt.text = $"{fileName} - ({session.waypoints.Count * 0.015f}s)";
+        
 
         string rawName = fileName.Replace(".json", "");
+        //disptxt.text = $"{rawName} - ( {session.waypoints.Count}pt, {session.waypoints.Count * 0.015f}s)";
         string[] parts = rawName.Split('_');
 
         if (parts.Length >= 3)
         {
-            string name = parts[0];
-            string datePart = parts[1]; // yyyymmdd
-            string timePart = parts[2]; // hhmmss
+            string name = (session.userName=="") ? parts[0] : session.userName;
 
-            string mm = datePart.Substring(4, 2);
-            string dd = datePart.Substring(6, 2);
+            string mm = parts[2];
+            string dd = parts[3];
 
-            string hh = timePart.Substring(0, 2);
-            string min = timePart.Substring(2, 2);
+            string hh = parts[4];
+            string min = parts[5];
 
-            disptxt.text = $"{name} - {mm}/{dd} - {hh}:{min} ({session.waypoints.Count*0.015f}s)";
+            disptxt.text = $"{name} - {mm}/{dd} - {hh}:{min} - [{(session.motionType=="" ? "others" : session.motionType)}] ({session.waypoints.Count*0.015f}s)";
         }
 
         //just in case
@@ -81,7 +80,7 @@ public class ReplayDataContainer : MonoBehaviour
         if (btn == null) btn = GetComponent<Button>();
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(ReturnData);
-
+        return (rHandMotionPoints.Count.ToString());
         //for (int i = 0; i < session.waypoints.Count; i++)
         //{
         //    //hmd

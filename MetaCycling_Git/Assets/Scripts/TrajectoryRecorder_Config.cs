@@ -9,9 +9,13 @@ public class TrajectoryRecorder_Config : MonoBehaviour
     [SerializeField] private string filePrefix = "MultiTraj";
     [SerializeField] private string MotionType = "Undefined";
 
+    public static TrajectoryRecorder_Config instance;
     void Awake()
     {
         if (!setOnAwake) return;
+
+        if(instance == null)
+            instance = this;
 
         string fPrefix = "";
         switch (namingType)

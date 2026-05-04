@@ -1,10 +1,12 @@
+//using Meta.XR.ImmersiveDebugger.UserInterface.Generic;
+using Meta.XR.MultiplayerBlocks.Shared;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using TMPro;
-using Meta.XR.MultiplayerBlocks.Shared;
 
 public class FitnessUIManager : MonoBehaviour
 {
@@ -42,6 +44,16 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private GameObject recordingIcon;
     [SerializeField] private GameObject slowIcon;
 
+    [Header("Name Input")]
+    [SerializeField] private GameObject nameInpGameObj;
+    [SerializeField] private GameObject barGameObj;
+    [SerializeField] private TMP_Dropdown ddlMotionType;
+    [SerializeField] private GameObject ddlContent;
+    [SerializeField] private string[] motionSelection = { "long jump", "vertical jump", "jump rope", "walking", "others" };
+    [SerializeField] private TMP_InputField nameInp;
+    [SerializeField] private Button nameStartBtn;
+    [SerializeField] private Button nameCancelBtn;
+
     [Header("Replay List UI")]
     [SerializeField] private Button sortListBtn;
     [SerializeField] private TMP_Text sortListText;
@@ -54,6 +66,11 @@ public class FitnessUIManager : MonoBehaviour
     private FitnessTestManager m_fitness;
     private PathVisualizer m_path;
     private ReplayManager m_replay;
+    private TrajectoryRecorder_Config m_recorder;
+
+    private TouchScreenKeyboard vrKeyboard;
+    private string motType;
+    private string playerName;
 
     private bool isPlaying = false;
     private bool isHidden = true;
@@ -63,6 +80,7 @@ public class FitnessUIManager : MonoBehaviour
         m_fitness = FitnessTestManager.instance;
         m_path = PathVisualizer.instance;
         m_replay = ReplayManager.instance;
+        m_recorder = TrajectoryRecorder_Config.instance;
 
         CheckDisplayType();
         //endBtn.interactable = false;
@@ -72,25 +90,37 @@ public class FitnessUIManager : MonoBehaviour
         sortListText.text = m_replay.isSortByName ? "name" : "time";
         hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
 
+        ddlMotionType.ClearOptions();
+        List<string> options = new List<string>(motionSelection);
+        ddlMotionType.AddOptions(options);
+
+        motType = motionSelection[0];
+
+        nameInpGameObj.SetActive(false);
+
         #region recording btn setup
         startBtn.onClick.AddListener(() => {
+            nameInpGameObj.SetActive(true);
+            barGameObj.SetActive(false);
+            //moved to the startName btn
+
             //start moving if isplaying false
-            if (!isPlaying)
-                m_fitness.StartMovement(success => {
-                    if (!success)
-                        return;
-                    jumpRes = new JumpResult();
-                    isPlaying = !isPlaying;
+            //if (!isPlaying)
+            //    m_fitness.StartMovement(success => {
+            //        if (!success)
+            //            return;
+            //        jumpRes = new JumpResult();
+            //        isPlaying = !isPlaying;
 
-                    startBtn.gameObject.SetActive(false);
-                    endBtn.gameObject.SetActive(true);
+            //        startBtn.gameObject.SetActive(false);
+            //        endBtn.gameObject.SetActive(true);
 
-                    //startBtn.interactable = false;
-                    //endBtn.interactable = true;
-                });
+            //        startBtn.interactable = false;
+            //        endBtn.interactable = true;
+            //    });
             //or end moving if isplaying is true
-            ActivateIcon(recordingIcon.name);
-            barInfo.text = $"Recording";
+            //ActivateIcon(recordingIcon.name);
+            //barInfo.text = $"Recording";
         });
 
         endBtn.onClick.AddListener(() => {
@@ -138,6 +168,62 @@ public class FitnessUIManager : MonoBehaviour
 
         resetBtn.onClick.AddListener(m_fitness.ClearTrackingData);
 
+        #region Name Setup
+        ddlMotionType.onValueChanged.AddListener(delegate {
+            motType = motionSelection[ddlMotionType.value];
+            m_recorder.ChangeMotionType(motType);
+
+            ddlMotionType.Hide();
+
+            if (ddlContent != null)
+                ddlContent.SetActive(false);
+
+            // CRITICAL for VR: Clear selection to prevent the dropdown from staying "highlighted"
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        });
+
+        nameInp.onValueChanged.AddListener(delegate {
+            playerName = nameInp.text;
+        });
+
+        nameInp.onSelect.AddListener(delegate { OpenVRKeyboard(); });
+        nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
+
+        nameStartBtn.onClick.AddListener(() =>
+        {
+            string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
+            m_recorder.ChangeUserName(nameToSave);
+
+            nameInpGameObj.SetActive(false);
+            barGameObj.SetActive(true);
+            CloseVRKeyboard();
+
+            m_fitness.StartMovement(success =>
+            {
+                if (success)
+                {
+                    isPlaying = true;
+
+                    startBtn.gameObject.SetActive(false);
+                    endBtn.gameObject.SetActive(true);
+
+                    ActivateIcon(recordingIcon.name);
+                    barInfo.text = "Recording";
+                }
+            });
+
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        });
+
+        nameCancelBtn.onClick.AddListener(() => { 
+            nameInpGameObj.SetActive(false);
+            barGameObj.SetActive(true);
+            CloseVRKeyboard();
+        });
+
+        #endregion
         #region playback buttons bar setup
         playBtn.onClick.AddListener(() => {
             m_path.speedMult = 1f;
@@ -239,6 +325,11 @@ public class FitnessUIManager : MonoBehaviour
 
         float fps = 1.0f / Time.unscaledDeltaTime;
         fpsText.text = $"FPS: {Mathf.Ceil(fps)}";
+
+        if (vrKeyboard != null && vrKeyboard.status == TouchScreenKeyboard.Status.Visible)
+        {
+            nameInp.text = vrKeyboard.text;
+        }
     }
 
     private void CheckDisplayType()
@@ -269,4 +360,29 @@ public class FitnessUIManager : MonoBehaviour
         recordingIcon.SetActive(recordingIcon.name == name );
         slowIcon.SetActive(slowIcon.name == name );
     }
+
+    #region Open and close keyboard
+    private void CloseVRKeyboard()
+    {
+        if (vrKeyboard != null)
+        {
+            vrKeyboard.active = false; // This closes the system overlay
+            vrKeyboard = null;
+        }
+    }
+    public void OpenVRKeyboard()
+    {
+        // Ensure the InputField is actually ready to receive text
+        nameInp.ActivateInputField();
+
+        // For Quest API 34, use these specific parameters:
+        // 1. Initial text
+        // 2. Keyboard type
+        // 3. Auto-correct (false is safer for names)
+        // 4. Multiline (false for names)
+        // 5. Password (false)
+        // 6. Alert mode (MUST BE FALSE FOR OVERLAY)
+        vrKeyboard = TouchScreenKeyboard.Open(nameInp.text, TouchScreenKeyboardType.Default, false, false, false, false);
+    }
+    #endregion
 }
