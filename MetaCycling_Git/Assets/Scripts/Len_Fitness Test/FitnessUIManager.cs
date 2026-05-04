@@ -51,6 +51,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private GameObject ddlContent;
     [SerializeField] private string[] motionSelection = { "long jump", "vertical jump", "jump rope", "walking", "others" };
     [SerializeField] private TMP_InputField nameInp;
+    [SerializeField] private GameObject virtualKeyboardBlock; // Drag OVRVirtualKeyboardBuildingBlock here
     [SerializeField] private Button nameStartBtn;
     [SerializeField] private Button nameCancelBtn;
 
@@ -62,6 +63,9 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private GameObject startPrefab;
     [SerializeField] private TMP_Text moveDistText;
     [SerializeField] private TMP_Text heightTxt;
+
+    [Header("special")]
+    [SerializeField] private TMP_Text logTxt;
 
     private FitnessTestManager m_fitness;
     private PathVisualizer m_path;
@@ -170,6 +174,7 @@ public class FitnessUIManager : MonoBehaviour
 
         #region Name Setup
         ddlMotionType.onValueChanged.AddListener(delegate {
+            CloseVRKeyboard();
             motType = motionSelection[ddlMotionType.value];
             m_recorder.ChangeMotionType(motType);
 
@@ -187,8 +192,8 @@ public class FitnessUIManager : MonoBehaviour
             playerName = nameInp.text;
         });
 
-        nameInp.onSelect.AddListener(delegate { OpenVRKeyboard(); });
-        nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
+        nameInp.onSelect.AddListener(delegate { logTxt.text = "trying to input"; OpenVRKeyboard(); });
+        //nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
 
         nameStartBtn.onClick.AddListener(() =>
         {
@@ -362,27 +367,20 @@ public class FitnessUIManager : MonoBehaviour
     }
 
     #region Open and close keyboard
-    private void CloseVRKeyboard()
-    {
-        if (vrKeyboard != null)
-        {
-            vrKeyboard.active = false; // This closes the system overlay
-            vrKeyboard = null;
-        }
-    }
     public void OpenVRKeyboard()
     {
-        // Ensure the InputField is actually ready to receive text
+        virtualKeyboardBlock.SetActive(true);
         nameInp.ActivateInputField();
+    }
+    private void CloseVRKeyboard()
+    {
+        virtualKeyboardBlock.SetActive(false);
 
-        // For Quest API 34, use these specific parameters:
-        // 1. Initial text
-        // 2. Keyboard type
-        // 3. Auto-correct (false is safer for names)
-        // 4. Multiline (false for names)
-        // 5. Password (false)
-        // 6. Alert mode (MUST BE FALSE FOR OVERLAY)
-        vrKeyboard = TouchScreenKeyboard.Open(nameInp.text, TouchScreenKeyboardType.Default, false, false, false, false);
+        // CRITICAL: Deselect the UI so it doesn't get stuck in a "Highlighted" state
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        }
     }
     #endregion
 }
