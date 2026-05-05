@@ -91,9 +91,9 @@ public class FireRecordData
 [System.Serializable]
 public class SerializableVector3
 {
-    public double x;
-    public double y;
-    public double z;
+    [FirestoreProperty] public double x { get; set; }
+    [FirestoreProperty] public double y { get; set; }
+    [FirestoreProperty] public double z { get; set; }
     public SerializableVector3() { }
 
     public SerializableVector3(Vector3 rValue)
@@ -112,10 +112,10 @@ public class SerializableVector3
 [System.Serializable]
 public class SerializableQuaternion
 {
-    public float x;
-    public float y;
-    public float z;
-    public float w;
+    [FirestoreProperty] public float x { get; set; }
+    [FirestoreProperty] public float y { get; set; }
+    [FirestoreProperty] public float z { get; set; }
+    [FirestoreProperty] public float w { get; set; }
     public SerializableQuaternion(){}
     public SerializableQuaternion(Quaternion rValue)
     {
