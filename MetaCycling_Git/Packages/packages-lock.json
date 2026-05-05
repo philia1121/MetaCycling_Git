@@ -14,12 +14,28 @@
         "com.google.external-dependency-manager": "1.2.186"
       }
     },
+    "com.google.firebase.auth": {
+      "version": "file:../Assets/FirebaseRequirement/com.google.firebase.auth-13.6.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.app": "13.6.0"
+      }
+    },
     "com.google.firebase.firestore": {
       "version": "file:../Assets/FirebaseRequirement/com.google.firebase.firestore-13.6.0.tgz",
       "depth": 0,
       "source": "local-tarball",
       "dependencies": {
         "com.google.firebase.app": "13.6.0"
+      }
+    },
+    "com.google.firebase.storage": {
+      "version": "file:../Assets/FirebaseRequirement/com.google.firebase.storage-13.6.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.auth": "13.6.0"
       }
     },
     "com.mackysoft.serializereference-extensions": {

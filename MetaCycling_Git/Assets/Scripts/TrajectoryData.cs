@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Firebase.Firestore;
 using UnityEngine;
 using Firebase.Extensions;
+using Newtonsoft.Json;
 
 #region AOS
 // AoS, the old version of JSON data structure
@@ -84,10 +85,41 @@ public class FireRecordData
     [FirestoreProperty] public List<bool> ptLC { get; set; } = new List<bool>();
     [FirestoreProperty] public List<bool> rtLC { get; set; } = new List<bool>();
 }
+
+
+[System.Serializable]
+public class StorageRecordData
+{
+    public StorageRecordData() { }
+    public string userName = "";
+    public string motionType = "";
+    public string recordTime = "";
+    public double sampleInterval = 0.015f;
+
+    public List<double> timeStamp = new List<double>();
+    public List<SerializableVector3> pHDM = new List<SerializableVector3>();
+    public List<SerializableQuaternion> rHMD = new List<SerializableQuaternion>();
+    public List<SerializableVector3> pRH = new List<SerializableVector3>();
+    public List<SerializableQuaternion> rRH = new List<SerializableQuaternion>();
+    public List<SerializableVector3> pLH = new List<SerializableVector3>();
+    public List<SerializableQuaternion> rLH = new List<SerializableQuaternion>();
+    public List<SerializableVector3> pRC = new List<SerializableVector3>();
+    public List<SerializableQuaternion> rRC = new List<SerializableQuaternion>();
+    public List<SerializableVector3> pLC = new List<SerializableVector3>();
+    public List<SerializableQuaternion> rLC = new List<SerializableQuaternion>();
+    public List<bool> ptRH = new List<bool>();
+    public List<bool> rtRH = new List<bool>();
+    public List<bool> ptLH = new List<bool>();
+    public List<bool> rtLH = new List<bool>();
+    public List<bool> ptRC = new List<bool>();
+    public List<bool> rtRC = new List<bool>();
+    public List<bool> ptLC = new List<bool>();
+    public List<bool> rtLC = new List<bool>();
+}
 #endregion
 
 #region  JSON Serializable
-[FirestoreData]
+
 [System.Serializable]
 public class SerializableVector3
 {
@@ -108,7 +140,6 @@ public class SerializableVector3
         return new Vector3((float)x, (float)y, (float)z);
     }
 }
-[FirestoreData]
 [System.Serializable]
 public class SerializableQuaternion
 {

@@ -635,7 +635,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""binding"",
                     ""id"": ""51477af7-f25d-438b-8299-da1c3d8bcf19"",
-                    ""path"": ""<Keyboard>/r"",
+                    ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
