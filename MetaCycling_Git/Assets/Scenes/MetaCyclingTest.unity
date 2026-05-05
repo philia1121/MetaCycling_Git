@@ -10699,80 +10699,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 595199216}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &596196724 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 509967869104205133, guid: f92f191f24d8e1d459d681e873111806, type: 3}
-  m_PrefabInstance: {fileID: 1335226214}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &596196725 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6662364494007049267, guid: f92f191f24d8e1d459d681e873111806, type: 3}
-  m_PrefabInstance: {fileID: 1335226214}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 596196724}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2c57f81239a45f499dffca140f1fea5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &596196727
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 596196724}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32a25ee0780e6b5468047b0f868ccab8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showFiredText: 0
-  key: 116
-  HotKeyEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 596196725}
-        m_TargetAssemblyTypeName: TrajectoryRecorder, Assembly-CSharp
-        m_MethodName: StopRecording
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
---- !u!114 &596196728
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 596196724}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32a25ee0780e6b5468047b0f868ccab8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showFiredText: 0
-  key: 114
-  HotKeyEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 596196725}
-        m_TargetAssemblyTypeName: TrajectoryRecorder, Assembly-CSharp
-        m_MethodName: StartRecording
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &605536276
 GameObject:
   m_ObjectHideFlags: 0
@@ -21183,16 +21109,20 @@ PrefabInstance:
       propertyPath: trackingInfo
       value: 
       objectReference: {fileID: 1622883156}
+    - target: {fileID: 6662364494007049267, guid: f92f191f24d8e1d459d681e873111806, type: 3}
+      propertyPath: uploadToStore
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 509967869104205133, guid: f92f191f24d8e1d459d681e873111806, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 596196728}
+      addedObject: {fileID: 1848456264}
     - targetCorrespondingSourceObject: {fileID: 509967869104205133, guid: f92f191f24d8e1d459d681e873111806, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 596196727}
+      addedObject: {fileID: 1848456261}
   m_SourcePrefab: {fileID: 100100000, guid: f92f191f24d8e1d459d681e873111806, type: 3}
 --- !u!1 &1335412444
 GameObject:
@@ -35672,6 +35602,43 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1848359363}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1848456257 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 509967869104205133, guid: f92f191f24d8e1d459d681e873111806, type: 3}
+  m_PrefabInstance: {fileID: 1335226214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1848456261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848456257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4f3af4ea4b384941ba3baa3a286c192, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1848456264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848456257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4979d909fe0edd4496f8281ab880d20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RHand_PosTracked: 0
+  RHand_RotTracked: 0
+  RController_PosTracked: 0
+  RController_RotTracked: 0
+  LHand_PosTracked: 0
+  LHand_RotTracked: 0
+  LController_PosTracked: 0
+  LController_RotTracked: 0
 --- !u!1 &1862334791
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,7 +10,9 @@ using System.Threading.Tasks;
 using Firebase.Extensions;
 using Google.MiniJSON;
 using System;
-//using Palmmedia.ReportGenerator.Core.Parser.Analysis;
+using Firebase.Storage;
+using Newtonsoft.Json;
+
 public class TrajectoryRecorder : MonoBehaviour
 {
     [Header("Easy Show")]
@@ -19,6 +21,7 @@ public class TrajectoryRecorder : MonoBehaviour
 
     [Header("Save Related")]
     public bool uploadToStore = true;
+    public bool uploadToStorage = true;
     public float recordInterval = 0.015f;
     string filePrefix = "MC";
     public string savedFolder = "SoA";
@@ -30,7 +33,7 @@ public class TrajectoryRecorder : MonoBehaviour
     private float startTime;
 
     // SoA
-    private FireRecordData recordData;
+    private StorageRecordData recordData;
 
     public TrackingInfo trackingInfo;
     
@@ -40,8 +43,11 @@ public class TrajectoryRecorder : MonoBehaviour
 
     //added for making this into singleton
     public static TrajectoryRecorder instance;
+
     // Firebase Essential
     private FirebaseFirestore db;
+    private FirebaseStorage storage;
+    private StorageReference storageRef;
 
     void Awake()
     {
@@ -130,7 +136,7 @@ public class TrajectoryRecorder : MonoBehaviour
     }
     void StartNewRecordData()
     {
-        recordData = new FireRecordData();
+        recordData = new StorageRecordData();
         recordData.userName = m_user;
         recordData.motionType = m_motion;
         recordData.recordTime = $"{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}";
@@ -178,9 +184,9 @@ public class TrajectoryRecorder : MonoBehaviour
         Debug.Log("Add Waypoint");
     }
     void UpdateNewRecordData()
-    {   
+    {
         // Time Stamp
-        double timeSinceStart = Math.Round(Time.time - startTime,3);
+        double timeSinceStart = Math.Round(Time.time - startTime, 3);
         recordData.timeStamp.Add(timeSinceStart);
 
         recordData.pHDM.Add(new SerializableVector3(VRMainCam.position));
@@ -210,19 +216,20 @@ public class TrajectoryRecorder : MonoBehaviour
         string name = $"{filePrefix}_{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}.json";
 
         //Save TrajectorySession
-        string ts = JsonUtility.ToJson(currentSession, true);
+        string ts = JsonConvert.SerializeObject(currentSession, Formatting.Indented);
         string ts_path = Path.Combine(Application.persistentDataPath, name);
         File.WriteAllText(ts_path, ts);
         Debug.Log($"AoS File saved at : {ts_path}");
 
         //Save FireRecordData
-        string frd = JsonUtility.ToJson(recordData, true);
+        string frd = JsonConvert.SerializeObject(recordData, Formatting.Indented);
         string frd_path = Path.Combine(Application.persistentDataPath, savedFolder, name);
         Directory.CreateDirectory(Path.Combine(Application.persistentDataPath, savedFolder)); // Create the sub folder in case they're not exit yet
         File.WriteAllText(frd_path, frd);
         Debug.Log($"SoA File save at : {frd_path}");
 
-        if (uploadToStore) UploadContentToFirestore(recordData, name);
+        // if (uploadToStore) UploadContentToFirestore(recordData, name);
+        if (uploadToStorage) UploadContentToStorage(frd, $"MC/{name}");
     }
 
     #region Firebase Related
@@ -234,6 +241,8 @@ public class TrajectoryRecorder : MonoBehaviour
             if (dependencyStatus == Firebase.DependencyStatus.Available)
             {
                 db = FirebaseFirestore.DefaultInstance;
+                storage = FirebaseStorage.DefaultInstance;
+                storageRef = storageRef = storage.GetReferenceFromUrl("gs://metacycling-d034c.firebasestorage.app");
                 Debug.Log("Firebase Firestore 已成功初始化。");
             }
             else
@@ -265,7 +274,23 @@ public class TrajectoryRecorder : MonoBehaviour
             }
         });
     }
+    public async void UploadContentToStorage(string str_data, string pathInStorage)
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(str_data);
+
+        StorageReference fileRef = storageRef.Child(pathInStorage);
+        try
+        {
+            StorageMetadata metadata = await fileRef.PutBytesAsync(bytes);
+            Debug.Log($"上傳成功！檔案名稱: {metadata.Name}, 大小: {metadata.SizeBytes}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"上傳失敗: {e.Message}");
+        }
+    }
     #endregion
+
     public void SetFilePrefix(string prefix)
     {
         if (prefix == null) return;

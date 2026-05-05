@@ -30,6 +30,14 @@
         "com.google.firebase.app": "13.6.0"
       }
     },
+    "com.google.firebase.storage": {
+      "version": "file:../Assets/FirebaseRequirement/com.google.firebase.storage-13.6.0.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.auth": "13.6.0"
+      }
+    },
     "com.mackysoft.serializereference-extensions": {
       "version": "https://github.com/mackysoft/Unity-SerializeReferenceExtensions.git?path=Assets/MackySoft/MackySoft.SerializeReferenceExtensions",
       "depth": 0,
