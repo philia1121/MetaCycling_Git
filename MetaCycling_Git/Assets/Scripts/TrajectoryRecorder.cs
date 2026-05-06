@@ -310,6 +310,7 @@ public class TrajectoryRecorder : MonoBehaviour
         m_user = name;
         if (currentSession != null) currentSession.userName= name;
         if (recordData != null) recordData.userName = name;
+        SetFilePrefix(name);
     }
 
 }

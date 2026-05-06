@@ -475,6 +475,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ReCenter"",
+                    ""type"": ""Button"",
+                    ""id"": ""880329ac-af10-45f0-b4eb-e1b4aa683dd1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1060,6 +1069,39 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""Delete"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""5393096e-cec0-44ab-b6d2-12f8aa0fdbbd"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ReCenter"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""cd3f89f6-eca1-4136-852d-a3450f22e035"",
+                    ""path"": ""<XRController>{LeftHand}/primaryButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ReCenter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""8458f667-83f5-4f06-a960-061a6be284f1"",
+                    ""path"": ""<XRController>{LeftHand}/secondaryButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ReCenter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1103,6 +1145,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_B = m_Prototype.FindAction("B", throwIfNotFound: true);
         m_Prototype_Record = m_Prototype.FindAction("Record", throwIfNotFound: true);
         m_Prototype_Delete = m_Prototype.FindAction("Delete", throwIfNotFound: true);
+        m_Prototype_ReCenter = m_Prototype.FindAction("ReCenter", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1341,6 +1384,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_B;
     private readonly InputAction m_Prototype_Record;
     private readonly InputAction m_Prototype_Delete;
+    private readonly InputAction m_Prototype_ReCenter;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -1366,6 +1410,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @B => m_Wrapper.m_Prototype_B;
         public InputAction @Record => m_Wrapper.m_Prototype_Record;
         public InputAction @Delete => m_Wrapper.m_Prototype_Delete;
+        public InputAction @ReCenter => m_Wrapper.m_Prototype_ReCenter;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1438,6 +1483,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @Delete.started += instance.OnDelete;
             @Delete.performed += instance.OnDelete;
             @Delete.canceled += instance.OnDelete;
+            @ReCenter.started += instance.OnReCenter;
+            @ReCenter.performed += instance.OnReCenter;
+            @ReCenter.canceled += instance.OnReCenter;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -1505,6 +1553,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @Delete.started -= instance.OnDelete;
             @Delete.performed -= instance.OnDelete;
             @Delete.canceled -= instance.OnDelete;
+            @ReCenter.started -= instance.OnReCenter;
+            @ReCenter.performed -= instance.OnReCenter;
+            @ReCenter.canceled -= instance.OnReCenter;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -1561,5 +1612,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnB(InputAction.CallbackContext context);
         void OnRecord(InputAction.CallbackContext context);
         void OnDelete(InputAction.CallbackContext context);
+        void OnReCenter(InputAction.CallbackContext context);
     }
 }

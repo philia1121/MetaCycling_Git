@@ -109,6 +109,7 @@ public class FitnessTestManager : MonoBehaviour
 
         //end jump
         controlMap.Prototype.X.started += ctx => {
+            return;
             jumpedPos = Vector3.zero;
             jumpedPos = trackedGameObject.transform.position;
 
@@ -146,6 +147,7 @@ public class FitnessTestManager : MonoBehaviour
         //determine start, then start to record
         controlMap.Prototype.A.started += ctx => StartCoroutine(CalibratePos(result =>
         {
+            return;
             ClearTrackingData();
 
             calibratedStartPos = result;
@@ -186,10 +188,18 @@ public class FitnessTestManager : MonoBehaviour
         //record end pos
         controlMap.Prototype.Y.started += ctx =>
         {
+            return;
             path.DisplayTrailingPath();
         };
 
-        controlMap.Prototype.Left_Grip.started += ctx => ClearTrackingData();
+        controlMap.Prototype.Left_Grip.started += ctx =>
+        {
+            return;
+            ClearTrackingData();
+
+        };
+
+
     }
 
     private GameObject CheckInstantiatedObject(GameObject objVar, GameObject objPrefab, Vector3 pos, Quaternion rot)

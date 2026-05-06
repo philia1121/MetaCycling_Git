@@ -51,7 +51,6 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private GameObject ddlContent;
     [SerializeField] private string[] motionSelection = { "long jump", "vertical jump", "jump rope", "walking", "others" };
     [SerializeField] private TMP_InputField nameInp;
-    [SerializeField] private GameObject virtualKeyboardBlock; // Drag OVRVirtualKeyboardBuildingBlock here
     [SerializeField] private Button nameStartBtn;
     [SerializeField] private Button nameCancelBtn;
 
@@ -101,6 +100,7 @@ public class FitnessUIManager : MonoBehaviour
         motType = motionSelection[0];
 
         nameInpGameObj.SetActive(false);
+        CloseVRKeyboard();
 
         #region recording btn setup
         startBtn.onClick.AddListener(() => {
@@ -193,7 +193,7 @@ public class FitnessUIManager : MonoBehaviour
         });
 
         nameInp.onSelect.AddListener(delegate { logTxt.text = "trying to input"; OpenVRKeyboard(); });
-        //nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
+        nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
 
         nameStartBtn.onClick.AddListener(() =>
         {
@@ -369,18 +369,18 @@ public class FitnessUIManager : MonoBehaviour
     #region Open and close keyboard
     public void OpenVRKeyboard()
     {
-        virtualKeyboardBlock.SetActive(true);
-        nameInp.ActivateInputField();
+        //virtualKeyboardBlock.KeyboardOpen();
+        //nameInp.ActivateInputField();
     }
     private void CloseVRKeyboard()
     {
-        virtualKeyboardBlock.SetActive(false);
+        //virtualKeyboardBlock.KeyboardClose();
 
         // CRITICAL: Deselect the UI so it doesn't get stuck in a "Highlighted" state
-        if (UnityEngine.EventSystems.EventSystem.current != null)
-        {
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-        }
+        //if (UnityEngine.EventSystems.EventSystem.current != null)
+        //{
+        //    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        //}
     }
     #endregion
 }
