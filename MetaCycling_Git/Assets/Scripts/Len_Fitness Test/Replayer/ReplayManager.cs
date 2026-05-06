@@ -51,12 +51,14 @@ public class ReplayManager : MonoBehaviour
 
     public void RefreshReplayList()
     {
+        //try to read data
         if (!Directory.Exists(folderPath))
         {
             Debug.LogError($"Directory not found: {folderPath}");
             return;
         }
 
+        //clear all prefabs
         for (int i = content.childCount - 1; i >= 0; i--)
         {
             Destroy(content.GetChild(i).gameObject);
@@ -64,40 +66,54 @@ public class ReplayManager : MonoBehaviour
 
         // Grab all files ending in .json
         DirectoryInfo info = new DirectoryInfo(folderPath);
+        FileInfo[] files = info.GetFiles("*.json");
+        //setup list
+        List<ReplayFileEntry> entries = new List<ReplayFileEntry>();
 
-        //Sort by LastWriteTime (Newest to Oldest)
-        var sortedFiles = isSortByName ?
-            info.GetFiles("*.json")
-            .OrderByDescending(f => f.Name)
-            .ToList()
-            :
-            info.GetFiles("*.json")
-            .OrderByDescending(f => f.LastWriteTime)
-            .ToList();
-
-        string debugAccumulator = "";
-
-        for (int i = 0; i < sortedFiles.Count; i++)
+        foreach (var file in files)
         {
             try
             {
-                string jsonContent = File.ReadAllText(sortedFiles[i].FullName);
+                string jsonContent = File.ReadAllText(file.FullName);
                 TrajectorySession logData = JsonUtility.FromJson<TrajectorySession>(jsonContent);
+                if (logData != null)
+                {
+                    entries.Add(new ReplayFileEntry
+                    {
+                        File = file,
+                        Data = logData
+                    });
+                }
+            }
+            catch (System.Exception e) { Debug.LogError($"Failed to read {file.Name}: {e.Message}"); }
+        }
 
-                if (logData == null) continue;
+        //Sort by LastWriteTime (Newest to Oldest)
+        var sortedEntries = isSortByName ?
+            entries
+            .OrderBy(e => e.Data.userName)          
+            .ToList()
+            :
+            entries
+            .OrderByDescending(e => e.File.LastWriteTime)
+            .ToList()
+            ;
 
-                string cleanFileName = sortedFiles[i].Name;
+        string debugAccumulator = "";
 
-                debugAccumulator += $"{i}. {cleanFileName}";
+        for (int i = 0; i < sortedEntries.Count; i++)
+        {
+            try
+            {
+                var entry = sortedEntries[i];
 
                 ReplayDataContainer _c = Instantiate(jsonPrefab, content);
 
                 _c.transform.SetParent(content, false);
                 _c.transform.localScale = Vector3.one;
 
-                string count = _c.SetData(this, cleanFileName, logData);
-                debugAccumulator += count + "\n";
-
+                string count = _c.SetData(this, entry.File.Name, entry.Data);
+                debugAccumulator += $"{i}. {entry.File.Name} {count}\n";
             }
             catch (System.Exception e)
             {
@@ -140,4 +156,12 @@ public class ReplayManager : MonoBehaviour
         }
         return offsetList;
     }
+}
+
+//just to help the sorting
+[System.Serializable]
+public class ReplayFileEntry
+{
+    public FileInfo File;
+    public TrajectorySession Data;
 }
