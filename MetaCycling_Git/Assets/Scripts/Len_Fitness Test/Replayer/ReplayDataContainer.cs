@@ -81,34 +81,6 @@ public class ReplayDataContainer : MonoBehaviour
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(ReturnData);
         return (rHandMotionPoints.Count.ToString());
-        //for (int i = 0; i < session.waypoints.Count; i++)
-        //{
-        //    //hmd
-        //    MotionPointSimple _pHmd = new MotionPointSimple
-        //    {
-        //        position = session.waypoints[i].pos_HMD,
-        //        rotation = session.waypoints[i].rot_HMD,
-        //    };
-        //    hmdMotionPoints.Add(_pHmd);
-
-        //    //lHand
-        //    MotionPointSimple _pLH = new MotionPointSimple
-        //    {
-        //        position = session.waypoints[i].pos_LHand,
-        //        rotation = session.waypoints[i].rot_LHand,
-        //    };
-        //    lHandMotionPoints.Add(_pLH);
-
-        //    //rHand
-        //    MotionPointSimple _pRH = new MotionPointSimple
-        //    {
-        //        position = session.waypoints[i].pos_RHand,
-        //        rotation = session.waypoints[i].rot_RHand,
-        //    };
-        //    rHandMotionPoints.Add(_pRH);
-        //}
-
-        //btn.onClick.AddListener(ReturnData);
     }
 
     public void ReturnData()

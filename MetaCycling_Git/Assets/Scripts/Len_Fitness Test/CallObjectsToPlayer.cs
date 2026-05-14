@@ -6,6 +6,7 @@ public class CallObjectsToPlayer : MonoBehaviour
 {
     public Transform playerHead;
     public GameObject[] callObj;
+    public Vector3 offset;
     ControlMap controlMap;
 
     private void Awake()
@@ -21,7 +22,10 @@ public class CallObjectsToPlayer : MonoBehaviour
     {
         foreach (GameObject obj in callObj)
         {
-            obj.transform.position = playerHead.position;
+            Vector3 spreadOffset = offset + (Vector3.left * 0.5f);
+
+            obj.transform.position = playerHead.TransformPoint(spreadOffset);
+            obj.transform.LookAt(playerHead);
         }
     }
 }
