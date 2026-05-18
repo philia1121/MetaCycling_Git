@@ -150,34 +150,46 @@ public class UIPlayerMovementStats : MonoBehaviour
     {
         int reps = 0;
         float maxSpeed = 0;
-        bool isPulling = false;
+
+        bool isPulling = false; //check pulling or not
+        bool needsRecovery = false; //extra check to stop the bouncing
 
         // Detection Settings
-        float pullVelocityThreshold = 0.3f; // Must be pulling at least this fast
-        float returnVelocityThreshold = -0.1f; // Speed to reset for next rep
-        float finishDistance = 0.4f; // Must be within 45cm of HMD to count as "at the chest"
+        float pullVelocityThreshold = 0.15f; // Must be pulling at least this fast
+        float returnVelocityThreshold = -0.12f; // Speed to reset for next rep
+        float finishDistance = 0.4f; // Must be within n cm of HMD to count as "at the chest"
+        float recoveryDistance = 0.51f; //user must kinda release their hand to this distance for it to count again
 
         for (int i = 1; i < lHandMotionPoints.Count; i++)
         {
-            // 1. Calculate the Bar (Midpoint)
+            // calc bar and head pos
             Vector3 barPosCurr = (lHandMotionPoints[i].position + rHandMotionPoints[i].position) / 2f;
             Vector3 barPosPrev = (lHandMotionPoints[i - 1].position + rHandMotionPoints[i - 1].position) / 2f;
             Vector3 hmdPos = hmdMotionPoints[i].position;
 
-            // 2. Distances and Velocity
+            // calc distance and velocity
             float distCurr = Vector3.Distance(barPosCurr, hmdPos);
             float distPrev = Vector3.Distance(barPosPrev, hmdPos);
 
-            // Relative velocity toward the chest (Positive = Pulling)
+            // relative velocity toward the chest (Positive = Pulling)
             float relVel = (distPrev - distCurr) / 0.015f;
 
-            // 3. Log Max Speed (Peak Velocity during any pull)
+            // log max speed for extra flavour basically
             if (relVel > maxSpeed) maxSpeed = relVel;
 
-            // 4. Rep State Machine
+            //check is player kinda recovering or not
+            if (needsRecovery)
+            {
+                if (distCurr > recoveryDistance || relVel < returnVelocityThreshold)
+                {
+                    needsRecovery = false; // pushed the bar away
+                }
+                continue; // skip till they finish recover
+            }
+
+            // Rep State Machine
             if (!isPulling)
             {
-                // Transition to Pulling: Fast movement toward chest
                 if (relVel > pullVelocityThreshold)
                 {
                     isPulling = true;
@@ -185,14 +197,14 @@ public class UIPlayerMovementStats : MonoBehaviour
             }
             else
             {
-                // Transition to Rep Complete: 
-                // Velocity drops (stop) AND they are actually near the chest
+                // Successfully finished pulling
                 if (relVel < 0.05f && distCurr < finishDistance)
                 {
                     reps++;
                     isPulling = false;
+                    needsRecovery = true; // LOCK the state until they extend arms
                 }
-                // Fail-safe: If they push back out without finishing, reset state
+                // Fail-safe: aborted stroke
                 else if (relVel < returnVelocityThreshold)
                 {
                     isPulling = false;
