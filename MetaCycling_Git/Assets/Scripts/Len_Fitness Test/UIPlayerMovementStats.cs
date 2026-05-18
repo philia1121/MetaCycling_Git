@@ -8,7 +8,14 @@ public class UIPlayerMovementStats : MonoBehaviour
 {
     [SerializeField] private TMP_Text infoText;
 
+    [SerializeField] private AudioSource source;
+    [SerializeField] private AudioClip effectSFX;
+
+    private LiveRowingTracker rowingTracker = new LiveRowingTracker();
+    private bool isRowing = false;
+    private float distPrev;
     private PathVisualizer m_path;
+
 
     List<MotionPointSimple> hmdMotionPoints;
     List<MotionPointSimple> rHandMotionPoints;
@@ -56,6 +63,134 @@ public class UIPlayerMovementStats : MonoBehaviour
                 HandleWalking(true);
                 break;
         }
+    }
+
+    private void FixedUpdate()
+    {
+        if(!isRowing)
+            return;
+
+        // Detection Settings
+        float pullVelocityThreshold = 0.15f; // Must be pulling at least this fast
+        float returnVelocityThreshold = -0.12f; // Speed to reset for next rep
+        float finishDistance = 0.4f; // Must be within n cm of HMD to count as "at the chest"
+        float recoveryDistance = 0.51f; //user must kinda release their hand to this distance for it to count again
+
+        // calc bar and head pos
+        Vector3 barPosCurr = m_path.LHand_Transform.position;
+        Vector3 hmdPos = m_path.HMD_Transform.position;
+        float distCurr = Vector3.Distance(barPosCurr, hmdPos);
+
+        float relVel = 0f;
+        if (rowingTracker.distPrev > 0f)
+        {
+            relVel = (rowingTracker.distPrev - distCurr) / Time.fixedDeltaTime;
+        }
+        rowingTracker.distPrev = distCurr;
+
+        if (relVel > rowingTracker.maxSpeed) rowingTracker.maxSpeed = relVel;
+
+        if (rowingTracker.needsRecovery)
+        {
+            if (distCurr > recoveryDistance || relVel < returnVelocityThreshold)
+            {
+                rowingTracker.needsRecovery = false;
+            }
+            return; // Exit frame safely
+        }
+
+        // 6. Rep State Machine Processing
+        if (!rowingTracker.isPulling)
+        {
+            if (relVel > pullVelocityThreshold)
+            {
+                rowingTracker.isPulling = true;
+            }
+        }
+        else
+        {
+            if (relVel < 0.05f && distCurr < finishDistance)
+            {
+                rowingTracker.reps++;
+                rowingTracker.isPulling = false;
+                rowingTracker.needsRecovery = true;
+
+                source.PlayOneShot(effectSFX);
+            }
+            else if (relVel < returnVelocityThreshold)
+            {
+                rowingTracker.isPulling = false;
+            }
+        }
+    }
+
+    public void UpdateMovementType(string name, bool active)
+    {
+        if (name.ToLower() != "row  machine")
+            return;
+        rowingTracker.Reset();
+        isRowing = active;
+    }
+
+    private void HandleLiveRowing()
+    {
+        bool isPulling = false; //check pulling or not
+        bool needsRecovery = false; //extra check to stop the bouncing
+
+        // Detection Settings
+        float pullVelocityThreshold = 0.15f; // Must be pulling at least this fast
+        float returnVelocityThreshold = -0.12f; // Speed to reset for next rep
+        float finishDistance = 0.4f; // Must be within n cm of HMD to count as "at the chest"
+        float recoveryDistance = 0.51f; //user must kinda release their hand to this distance for it to count again
+
+        // calc bar and head pos
+        Vector3 barPosCurr = m_path.LHand_Transform.position;
+        Vector3 hmdPos = m_path.HMD_Transform.position;
+        float distCurr = Vector3.Distance(barPosCurr, hmdPos);
+
+        float relVel = 0f;
+        if (distPrev > 0f) // Skip the very first frame so we don't get a massive spike
+        {
+            // (distPrev - distCurr) is positive when hands are moving closer to the HMD (chest)
+            relVel = (distPrev - distCurr) / Time.fixedDeltaTime;
+        }
+
+        // Save current distance for the next frame's calculation
+        distPrev = distCurr;
+
+        if (needsRecovery)
+        {
+            if (distCurr > recoveryDistance || relVel < returnVelocityThreshold)
+            {
+                needsRecovery = false; // pushed the bar away
+            }
+            return; // skip till they finish recover
+        }
+
+        // Rep State Machine
+        if (!isPulling)
+        {
+            if (relVel > pullVelocityThreshold)
+            {
+                isPulling = true;
+            }
+        }
+        else
+        {
+            // Successfully finished pulling
+            if (relVel < 0.05f && distCurr < finishDistance)
+            {
+                isPulling = false;
+                needsRecovery = true; // LOCK the state until they extend arms
+                source.PlayOneShot(effectSFX);
+            }
+            // Fail-safe: aborted stroke
+            else if (relVel < returnVelocityThreshold)
+            {
+                isPulling = false;
+            }
+        }
+
     }
 
     private void FetchMotionData()
@@ -163,8 +298,8 @@ public class UIPlayerMovementStats : MonoBehaviour
         for (int i = 1; i < lHandMotionPoints.Count; i++)
         {
             // calc bar and head pos
-            Vector3 barPosCurr = (lHandMotionPoints[i].position + rHandMotionPoints[i].position) / 2f;
-            Vector3 barPosPrev = (lHandMotionPoints[i - 1].position + rHandMotionPoints[i - 1].position) / 2f;
+            Vector3 barPosCurr = lHandMotionPoints[i].position; //(lHandMotionPoints[i].position + rHandMotionPoints[i].position) / 2f;
+            Vector3 barPosPrev = lHandMotionPoints[i - 1].position; //(lHandMotionPoints[i - 1].position + rHandMotionPoints[i - 1].position) / 2f;
             Vector3 hmdPos = hmdMotionPoints[i].position;
 
             // calc distance and velocity
@@ -255,5 +390,24 @@ public class UIPlayerMovementStats : MonoBehaviour
     {
         float sqDist = (end - start).sqrMagnitude;
         return (MathF.Sqrt(sqDist));
+    }
+}
+
+[System.Serializable]
+public class LiveRowingTracker
+{
+    public bool isPulling = false;
+    public bool needsRecovery = false;
+    public float distPrev = 0f;
+    public int reps = 0;
+    public float maxSpeed = 0f;
+
+    public void Reset()
+    {
+        isPulling = false;
+        needsRecovery = false;
+        distPrev = 0f;
+        reps = 0;
+        maxSpeed = 0f;
     }
 }

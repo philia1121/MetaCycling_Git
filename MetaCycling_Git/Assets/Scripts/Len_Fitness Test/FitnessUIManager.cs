@@ -162,6 +162,7 @@ public class FitnessUIManager : MonoBehaviour
                 ActivateIcon("");
                 barInfo.text = $"";
             }
+            m_stats.UpdateMovementType(motType, false);
             m_stats.ChangeDisplay(motType);
         });
 
@@ -225,6 +226,7 @@ public class FitnessUIManager : MonoBehaviour
 
                     ActivateIcon(recordingIcon.name);
                     barInfo.text = "Recording";
+                    m_stats.UpdateMovementType(motType, true);
                 }
             });
 
@@ -232,7 +234,8 @@ public class FitnessUIManager : MonoBehaviour
                 UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         });
 
-        nameCancelBtn.onClick.AddListener(() => { 
+        nameCancelBtn.onClick.AddListener(() => {
+            m_stats.UpdateMovementType(motType, false);
             nameInpGameObj.SetActive(false);
             barGameObj.SetActive(true);
         });
