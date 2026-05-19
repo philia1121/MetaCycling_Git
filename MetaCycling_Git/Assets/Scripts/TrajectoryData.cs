@@ -66,7 +66,7 @@ public class FireRecordData
     [FirestoreProperty] public double sampleInterval { get; set; } = 0.015f;
 
     [FirestoreProperty] public List<double> timeStamp { get; set; } = new List<double>();
-    [FirestoreProperty] public List<SerializableVector3> pHDM { get; set; } = new List<SerializableVector3>();
+    [FirestoreProperty] public List<SerializableVector3> pHMD { get; set; } = new List<SerializableVector3>();
     [FirestoreProperty] public List<SerializableQuaternion> rHMD { get; set; } = new List<SerializableQuaternion>();
     [FirestoreProperty] public List<SerializableVector3> pRH { get; set; } = new List<SerializableVector3>();
     [FirestoreProperty] public List<SerializableQuaternion> rRH { get; set; } = new List<SerializableQuaternion>();
@@ -97,7 +97,7 @@ public class StorageRecordData
     public double sampleInterval = 0.015f;
 
     public List<double> timeStamp = new List<double>();
-    public List<SerializableVector3> pHDM = new List<SerializableVector3>();
+    public List<SerializableVector3> pHMD = new List<SerializableVector3>();
     public List<SerializableQuaternion> rHMD = new List<SerializableQuaternion>();
     public List<SerializableVector3> pRH = new List<SerializableVector3>();
     public List<SerializableQuaternion> rRH = new List<SerializableQuaternion>();

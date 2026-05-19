@@ -189,7 +189,7 @@ public class TrajectoryRecorder : MonoBehaviour
         double timeSinceStart = Math.Round(Time.time - startTime, 3);
         recordData.timeStamp.Add(timeSinceStart);
 
-        recordData.pHDM.Add(new SerializableVector3(VRMainCam.position));
+        recordData.pHMD.Add(new SerializableVector3(VRMainCam.position));
         recordData.rHMD.Add(new SerializableQuaternion(VRMainCam.rotation));
         recordData.pLC.Add(new SerializableVector3(OVRInput.GetLocalControllerPosition(OVRInput.Controller.LTouch)));
         recordData.rLC.Add(new SerializableQuaternion(OVRInput.GetLocalControllerRotation(OVRInput.Controller.LTouch)));
