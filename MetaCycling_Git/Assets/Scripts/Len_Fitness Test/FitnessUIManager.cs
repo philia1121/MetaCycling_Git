@@ -1,5 +1,6 @@
 //using Meta.XR.ImmersiveDebugger.UserInterface.Generic;
 using Meta.XR.MultiplayerBlocks.Shared;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -10,6 +11,8 @@ using UnityEngine.UI;
 
 public class FitnessUIManager : MonoBehaviour
 {
+    public static FitnessUIManager Instance;
+
     [Header("UI Indicatiors")]
     [SerializeField] private Button startBtn;
     [SerializeField] private Button endBtn;
@@ -64,6 +67,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private TMP_Text heightTxt;
 
     [Header("special")]
+    [SerializeField] private UIPlayerMovementStats m_stats;
     [SerializeField] private TMP_Text logTxt;
 
     private FitnessTestManager m_fitness;
@@ -71,13 +75,21 @@ public class FitnessUIManager : MonoBehaviour
     private ReplayManager m_replay;
     private TrajectoryRecorder_Config m_recorder;
 
-    private TouchScreenKeyboard vrKeyboard;
     private string motType;
     private string playerName;
 
     private bool isPlaying = false;
     private bool isHidden = true;
     private JumpResult jumpRes;
+
+    public Action<string> OnMovementTypeChanged;
+
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+    }
+
     private void Start()
     {
         m_fitness = FitnessTestManager.instance;
@@ -98,9 +110,9 @@ public class FitnessUIManager : MonoBehaviour
         ddlMotionType.AddOptions(options);
 
         motType = motionSelection[0];
+        m_stats.ClearDisplay();
 
         nameInpGameObj.SetActive(false);
-        CloseVRKeyboard();
 
         #region recording btn setup
         startBtn.onClick.AddListener(() => {
@@ -150,6 +162,8 @@ public class FitnessUIManager : MonoBehaviour
                 ActivateIcon("");
                 barInfo.text = $"";
             }
+            m_stats.UpdateMovementType(motType, false);
+            m_stats.ChangeDisplay(motType);
         });
 
         #endregion
@@ -174,9 +188,10 @@ public class FitnessUIManager : MonoBehaviour
 
         #region Name Setup
         ddlMotionType.onValueChanged.AddListener(delegate {
-            CloseVRKeyboard();
             motType = motionSelection[ddlMotionType.value];
             m_recorder.ChangeMotionType(motType);
+
+            m_stats.ChangeDisplay(motType);
 
             ddlMotionType.Hide();
 
@@ -192,9 +207,6 @@ public class FitnessUIManager : MonoBehaviour
             playerName = nameInp.text;
         });
 
-        nameInp.onSelect.AddListener(delegate { logTxt.text = "trying to input"; OpenVRKeyboard(); });
-        nameInp.onEndEdit.AddListener(delegate { CloseVRKeyboard(); });
-
         nameStartBtn.onClick.AddListener(() =>
         {
             string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
@@ -202,7 +214,6 @@ public class FitnessUIManager : MonoBehaviour
 
             nameInpGameObj.SetActive(false);
             barGameObj.SetActive(true);
-            CloseVRKeyboard();
 
             m_fitness.StartMovement(success =>
             {
@@ -215,6 +226,7 @@ public class FitnessUIManager : MonoBehaviour
 
                     ActivateIcon(recordingIcon.name);
                     barInfo.text = "Recording";
+                    m_stats.UpdateMovementType(motType, true);
                 }
             });
 
@@ -222,10 +234,10 @@ public class FitnessUIManager : MonoBehaviour
                 UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         });
 
-        nameCancelBtn.onClick.AddListener(() => { 
+        nameCancelBtn.onClick.AddListener(() => {
+            m_stats.UpdateMovementType(motType, false);
             nameInpGameObj.SetActive(false);
             barGameObj.SetActive(true);
-            CloseVRKeyboard();
         });
 
         #endregion
@@ -330,11 +342,6 @@ public class FitnessUIManager : MonoBehaviour
 
         float fps = 1.0f / Time.unscaledDeltaTime;
         fpsText.text = $"FPS: {Mathf.Ceil(fps)}";
-
-        if (vrKeyboard != null && vrKeyboard.status == TouchScreenKeyboard.Status.Visible)
-        {
-            nameInp.text = vrKeyboard.text;
-        }
     }
 
     private void CheckDisplayType()
@@ -365,22 +372,4 @@ public class FitnessUIManager : MonoBehaviour
         recordingIcon.SetActive(recordingIcon.name == name );
         slowIcon.SetActive(slowIcon.name == name );
     }
-
-    #region Open and close keyboard
-    public void OpenVRKeyboard()
-    {
-        //virtualKeyboardBlock.KeyboardOpen();
-        //nameInp.ActivateInputField();
-    }
-    private void CloseVRKeyboard()
-    {
-        //virtualKeyboardBlock.KeyboardClose();
-
-        // CRITICAL: Deselect the UI so it doesn't get stuck in a "Highlighted" state
-        //if (UnityEngine.EventSystems.EventSystem.current != null)
-        //{
-        //    UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
-        //}
-    }
-    #endregion
 }

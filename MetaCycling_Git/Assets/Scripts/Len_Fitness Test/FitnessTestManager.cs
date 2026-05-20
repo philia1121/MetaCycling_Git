@@ -176,15 +176,6 @@ public class FitnessTestManager : MonoBehaviour
             //so the track can be calc'd after the start point is calibrated
         }));
 
-        //record manually for now unused
-        //controlMap.Prototype.B.started += ctx => {
-        //    Record(true);
-
-        //    trajectoryRecorder.StopRecording();
-        //    path.EndRecording();
-        //    path.DisplayPath();
-        //};
-
         //record end pos
         controlMap.Prototype.Y.started += ctx =>
         {
