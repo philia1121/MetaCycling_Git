@@ -45,6 +45,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private GameObject fastIcon;
     [SerializeField] private GameObject fastRewindIcon;
     [SerializeField] private GameObject recordingIcon;
+    [SerializeField] private GameObject recordingIconText;
     [SerializeField] private GameObject slowIcon;
 
     [Header("Name Input")]
@@ -82,6 +83,11 @@ public class FitnessUIManager : MonoBehaviour
     private bool isHidden = true;
     private JumpResult jumpRes;
 
+    //recording effect bcs its not apparent enough
+    private Coroutine recordingAnimationCoroutine;
+    private float simulatedRecordingTime = 0f;
+    private const float RECORDING_TICK_RATE = 0.015f;
+
     public Action<string> OnMovementTypeChanged;
 
     private void Awake()
@@ -118,6 +124,8 @@ public class FitnessUIManager : MonoBehaviour
         startBtn.onClick.AddListener(() => {
             nameInpGameObj.SetActive(true);
             barGameObj.SetActive(false);
+            m_stats.ClearDisplay();
+
             //moved to the startName btn
 
             //start moving if isplaying false
@@ -142,6 +150,12 @@ public class FitnessUIManager : MonoBehaviour
         endBtn.onClick.AddListener(() => {
             if (isPlaying)
             {
+                if (recordingAnimationCoroutine != null)
+                {
+                    StopCoroutine(recordingAnimationCoroutine);
+                    recordingAnimationCoroutine = null;
+                }
+
                 jumpRes = m_fitness.EndMovement();
                 if (!jumpRes.success)
                     return;
@@ -161,6 +175,10 @@ public class FitnessUIManager : MonoBehaviour
                 m_replay.RefreshReplayList();
                 ActivateIcon("");
                 barInfo.text = $"";
+
+                m_path.speedMult = 1f;
+                fastId = 1; rewindId = 1; slowId = 1;
+                barInfo.text = "x 1.0";
             }
             m_stats.UpdateMovementType(motType, false);
             m_stats.ChangeDisplay(motType);
@@ -225,7 +243,13 @@ public class FitnessUIManager : MonoBehaviour
                     endBtn.gameObject.SetActive(true);
 
                     ActivateIcon(recordingIcon.name);
-                    barInfo.text = "Recording";
+
+                    //barInfo.text = "Recording"; GIVE RECORDING EFFECT
+                    m_stats.ClearDisplay(); 
+
+                    if (recordingAnimationCoroutine != null) StopCoroutine(recordingAnimationCoroutine);
+                    recordingAnimationCoroutine = StartCoroutine(RecordingAnimationRoutine());
+
                     m_stats.UpdateMovementType(motType, true);
                 }
             });
@@ -362,6 +386,39 @@ public class FitnessUIManager : MonoBehaviour
         }
     }
 
+    private IEnumerator RecordingAnimationRoutine()
+    {
+        simulatedRecordingTime = 0f;
+        float blinkTimer = 0f;
+        bool iconState = true;
+
+        while (isPlaying)
+        {
+            // 1. Advance time based exactly on your 0.015s tracking intervals
+            float dt = Time.deltaTime;
+            simulatedRecordingTime += dt;
+
+            // 2. Format the time into HH:MM:SS string style
+            TimeSpan t = TimeSpan.FromSeconds(simulatedRecordingTime);
+            string timeString = string.Format("{0:D2}:{1:D2}:{2:D2}", t.Hours, t.Minutes, t.Seconds);
+
+            // Update the display bar string
+            barInfo.text = $"{timeString}";
+
+            // 3. Handle the 0.5s Blinking Logic for the Icon
+            blinkTimer += dt;
+            if (blinkTimer >= 0.5f)
+            {
+                blinkTimer = 0f;
+                iconState = !iconState;
+                recordingIcon.SetActive(iconState);
+            }
+
+            // Wait exactly your recording interval rate before the next update tick
+            yield return null;
+        }
+    }
+
     private void ActivateIcon(string name)
     {
         playIcon.SetActive(playIcon.name == name );
@@ -370,6 +427,7 @@ public class FitnessUIManager : MonoBehaviour
         playRewindIcon.SetActive(playRewindIcon.name == name );
         fastRewindIcon.SetActive(fastRewindIcon.name == name );
         recordingIcon.SetActive(recordingIcon.name == name );
+        recordingIconText.SetActive(recordingIcon.name == name );
         slowIcon.SetActive(slowIcon.name == name );
     }
 }
