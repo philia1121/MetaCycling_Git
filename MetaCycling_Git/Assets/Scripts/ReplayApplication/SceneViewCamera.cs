@@ -53,13 +53,32 @@ public class SceneViewCamera : MonoBehaviour
             transform.eulerAngles = new Vector3(pitch, yaw, 0f);
         }
 
-        // 中鍵/滾輪按住：平移視角
-        if (Mouse.current.leftButton.isPressed)
+        // 中鍵：平移視角
+        if (Mouse.current.middleButton.isPressed)
         {
             // 這裡乘上 Time.deltaTime 使平移較為平滑
             float panX = -mouseDelta.x * panSpeed * Time.deltaTime;
             float panY = -mouseDelta.y * panSpeed * Time.deltaTime;
             transform.Translate(new Vector3(panX, panY, 0f), Space.Self);
+        }
+
+        // 左鍵：以物件為中心移動視角
+        if (Mouse.current.leftButton.isPressed)
+        {
+            Vector3 center = GetTargetsCenter();
+            float distance = Vector3.Distance(transform.position, center);
+
+            // 避免距離過近造成計算異常
+            if (distance < 0.05f) distance = focusDistance;
+
+            yaw += mouseDelta.x * lookSpeed;
+            pitch -= mouseDelta.y * lookSpeed;
+            pitch = Mathf.Clamp(pitch, -89f, 89f); // 限制角度避免翻轉
+
+            // 計算新旋轉與位置
+            Quaternion rotation = Quaternion.Euler(pitch, yaw, 0f);
+            transform.position = center - (rotation * Vector3.forward * distance);
+            transform.rotation = rotation;
         }
 
         // 滾輪滾動：放大縮小 (Z軸移動)
@@ -71,14 +90,14 @@ public class SceneViewCamera : MonoBehaviour
 
     }
 
-    public void FocusOnTargets()
+    private Vector3 GetTargetsCenter()
     {
-        if (targetObjects == null || targetObjects.Length == 0) return;
+        if (targetObjects == null || targetObjects.Length == 0)
+            return transform.position + transform.forward * focusDistance;
 
         Vector3 center = Vector3.zero;
         int activeCount = 0;
 
-        // 算出所有「目前有顯示 (Active)」的物件的平均中心位置
         foreach (Transform t in targetObjects)
         {
             if (t != null && t.gameObject.activeInHierarchy)
@@ -90,9 +109,15 @@ public class SceneViewCamera : MonoBehaviour
 
         if (activeCount > 0)
         {
-            center /= activeCount;
-            // 保持相機當前的視角方向，單純把位置移動到中心點的後方
-            transform.position = center - transform.forward * focusDistance;
+            return center / activeCount;
         }
+
+        // 若完全沒有物件顯示，則回傳相機前方的一點作為虛擬中心
+        return transform.position + transform.forward * focusDistance;
+    }
+    public void FocusOnTargets()
+    {
+        Vector3 center = GetTargetsCenter();
+        transform.position = center - transform.forward * focusDistance;
     }
 }

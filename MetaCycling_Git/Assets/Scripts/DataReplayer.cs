@@ -16,6 +16,7 @@ public class DataReplayer : MonoBehaviour
 
     [Header("UI 控件")]
     public TextMeshProUGUI fileNameText;
+    public TextMeshProUGUI motionLabelText;
     public Button loadButton;
     public Button playPauseButton;
     public Slider timelineSlider;
@@ -28,10 +29,42 @@ public class DataReplayer : MonoBehaviour
     public Toggle rhToggle;
     public Toggle lhToggle;
 
+    [Header("視覺化特效 (軌跡與面向)")]
+    public Button modeToggleButton; // 👇 新增：用來切換 Show All / Trailing 的按鈕
+    public TextMeshProUGUI modeButtonText;
+    private bool isShowAllMode = false;
+
+    [Header("視覺化特效 (軌跡與面向)")]
+    [Tooltip("0 = 不顯示, 1 = 顯示至當前時間的所有軌跡")]
+    public Slider trailLengthSlider;
+    [Tooltip("0 = 關閉, 0.01 = 稀疏 (每100點), 1 = 極密 (每點)")]
+    public Slider orientationDensitySlider;
+    public float trailWidth = 0.015f;
+    [Tooltip("請放入一個 3D 模型 (例如有指向性的箭頭或細長方塊)")]
+    public Mesh orientationMesh;
+    public Material orientationMaterial;
+    [Tooltip("調整面向物件的縮放大小 (X, Y, Z)")]
+    public Vector3 orientationScale = Vector3.one;
+
+    // 👇 新增這行來控制面向物件的初始旋轉補償
+    [Tooltip("面向物件的基礎旋轉偏移量 (修正建模與Unity的軸向差異)")]
+    public Vector3 orientationRotationOffset = new Vector3(-90f, 0f, 0f);
+
     private StorageRecordData motionData;
     private bool isPlaying = false;
     private float currentTime = 0f;
     private float maxTime = 0f;
+
+    // --- 快取陣列 (提升效能用) ---
+    private Vector3[] hmdPos, rcPos, lcPos, rhPos, lhPos;
+    private Quaternion[] hmdRot, rcRot, lcRot, rhRot, lhRot;
+
+    // --- 軌跡渲染器 ---
+    public LineRenderer hmdLine, rcLine, lcLine, rhLine, lhLine;
+
+    // --- 當前播放狀態紀錄 ---
+    private int currentFrameIndex = 0;
+    private int trailStartIndex = 0;
 
     void Start()
     {
@@ -48,8 +81,25 @@ public class DataReplayer : MonoBehaviour
         if (lcToggle) lcToggle.onValueChanged.AddListener(isOn => lcObj.SetActive(isOn));
         if (rhToggle) rhToggle.onValueChanged.AddListener(isOn => rhObj.SetActive(isOn));
         if (lhToggle) lhToggle.onValueChanged.AddListener(isOn => lhObj.SetActive(isOn));
+
+        // 綁定物件與軌跡線的顯示隱藏
+        SetupToggle(hmdToggle, hmdObj, hmdLine);
+        SetupToggle(rcToggle, rcObj, rcLine);
+        SetupToggle(lcToggle, lcObj, lcLine);
+        SetupToggle(rhToggle, rhObj, rhLine);
+        SetupToggle(lhToggle, lhObj, lhLine);
+
+        if (modeToggleButton != null)
+        {
+            modeToggleButton.onClick.AddListener(ToggleDisplayMode);
+            UpdateModeText();
+        }
+
+        // 當特效滑桿數值改變時，強制更新畫面
+        if (trailLengthSlider) trailLengthSlider.onValueChanged.AddListener(_ => UpdateTrailLines());
     }
 
+    #region Select and Load File
     public void SelectAndLoadFile()
     {
         var paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "", true);
@@ -67,6 +117,7 @@ public class DataReplayer : MonoBehaviour
     {
         string jsonContent = File.ReadAllText(path);
         motionData = JsonUtility.FromJson<StorageRecordData>(jsonContent);
+        motionLabelText.text = motionData.motionType;
 
         if (motionData != null && motionData.timeStamp.Count > 0)
         {
@@ -77,9 +128,27 @@ public class DataReplayer : MonoBehaviour
             currentTime = 0f;
             isPlaying = false;
 
+            CacheMotionData();
             UpdateFrame(currentTime);
         }
     }
+
+    private void CacheMotionData()
+    {
+        int count = motionData.timeStamp.Count;
+        hmdPos = new Vector3[count]; rcPos = new Vector3[count]; lcPos = new Vector3[count]; rhPos = new Vector3[count]; lhPos = new Vector3[count];
+        hmdRot = new Quaternion[count]; rcRot = new Quaternion[count]; lcRot = new Quaternion[count]; rhRot = new Quaternion[count]; lhRot = new Quaternion[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            if (i < motionData.pHMD.Count) { hmdPos[i] = motionData.pHMD[i].ToVector3(); hmdRot[i] = motionData.rHMD[i].ToQuaternion(); }
+            if (i < motionData.pRC.Count) { rcPos[i] = motionData.pRC[i].ToVector3(); rcRot[i] = motionData.rRC[i].ToQuaternion(); }
+            if (i < motionData.pLC.Count) { lcPos[i] = motionData.pLC[i].ToVector3(); lcRot[i] = motionData.rLC[i].ToQuaternion(); }
+            if (i < motionData.pRH.Count) { rhPos[i] = motionData.pRH[i].ToVector3(); rhRot[i] = motionData.rRH[i].ToQuaternion(); }
+            if (i < motionData.pLH.Count) { lhPos[i] = motionData.pLH[i].ToVector3(); lhRot[i] = motionData.rLH[i].ToQuaternion(); }
+        }
+    }
+    #endregion
 
     void Update()
     {
@@ -95,6 +164,8 @@ public class DataReplayer : MonoBehaviour
             timelineSlider.SetValueWithoutNotify(currentTime);
             UpdateFrame(currentTime);
         }
+
+        DrawOrientations();
     }
 
     private void OnTimelineScrub(float value)
@@ -121,6 +192,7 @@ public class DataReplayer : MonoBehaviour
             // 反轉補數，取得「小於目前時間的最後一個影格索引」
             index = ~index - 1;
         }
+        currentFrameIndex = Mathf.Clamp(index, 0, motionData.timeStamp.Count - 1);
 
         // 確保 Index 不會超出 List 範圍
         index = Mathf.Clamp(index, 0, motionData.timeStamp.Count - 1);
@@ -129,34 +201,124 @@ public class DataReplayer : MonoBehaviour
             timeDisplay.text = $"{time:F2} / {maxTime:F2} s";
 
         // 更新五個物件的 Transform
-        if (motionData.pHMD != null && index < motionData.pHMD.Count)
+        if (hmdObj.activeInHierarchy) { hmdObj.transform.position = hmdPos[currentFrameIndex]; hmdObj.transform.rotation = hmdRot[currentFrameIndex]; }
+        if (rcObj.activeInHierarchy) { rcObj.transform.position = rcPos[currentFrameIndex]; rcObj.transform.rotation = rcRot[currentFrameIndex]; }
+        if (lcObj.activeInHierarchy) { lcObj.transform.position = lcPos[currentFrameIndex]; lcObj.transform.rotation = lcRot[currentFrameIndex]; }
+        if (rhObj.activeInHierarchy) { rhObj.transform.position = rhPos[currentFrameIndex]; rhObj.transform.rotation = rhRot[currentFrameIndex]; }
+        if (lhObj.activeInHierarchy) { lhObj.transform.position = lhPos[currentFrameIndex]; lhObj.transform.rotation = lhRot[currentFrameIndex]; }
+
+        // 更新軌跡
+        UpdateTrailLines();
+    }
+    private void UpdateTrailLines()
+    {
+        if (motionData == null || trailLengthSlider == null) return;
+
+        int totalFrames = motionData.timeStamp.Count;
+        // 計算軌跡應該包含幾個點 (Slider 0~1 對應 0~全部影格)
+        int pointCount = currentFrameIndex - trailStartIndex + 1;
+
+        if (isShowAllMode)
         {
-            hmdObj.transform.position = motionData.pHMD[index].ToVector3();
-            hmdObj.transform.rotation = motionData.rHMD[index].ToQuaternion();
+            trailStartIndex = 0; // 從第0格開始
+            pointCount = totalFrames; // 畫到最後一格
+        }
+        else
+        {
+            int trailLengthFrames = Mathf.RoundToInt(trailLengthSlider.value * totalFrames);
+            trailStartIndex = Mathf.Max(0, currentFrameIndex - trailLengthFrames);
+            pointCount = currentFrameIndex - trailStartIndex + 1; // 畫到當前時間格
         }
 
-        if (motionData.pRC != null && index < motionData.pRC.Count)
+        UpdateSingleLine(hmdLine, hmdObj, hmdPos, pointCount);
+        UpdateSingleLine(rcLine, rcObj, rcPos, pointCount);
+        UpdateSingleLine(lcLine, lcObj, lcPos, pointCount);
+        UpdateSingleLine(rhLine, rhObj, rhPos, pointCount);
+        UpdateSingleLine(lhLine, lhObj, lhPos, pointCount);
+    }
+    private void UpdateSingleLine(LineRenderer lr, GameObject obj, Vector3[] cache, int count)
+    {
+        if (!obj.activeSelf || count <= 1 || trailLengthSlider.value == 0)
         {
-            rcObj.transform.position = motionData.pRC[index].ToVector3();
-            rcObj.transform.rotation = motionData.rRC[index].ToQuaternion();
+            lr.positionCount = 0;
+            return;
         }
 
-        if (motionData.pLC != null && index < motionData.pLC.Count)
+        lr.positionCount = count;
+        for (int i = 0; i < count; i++)
         {
-            lcObj.transform.position = motionData.pLC[index].ToVector3();
-            lcObj.transform.rotation = motionData.rLC[index].ToQuaternion();
+            lr.SetPosition(i, cache[trailStartIndex + i]);
         }
+    }
+    private void DrawOrientations()
+    {
+        if (motionData == null || orientationDensitySlider == null || orientationDensitySlider.value <= 0f) return;
+        if (orientationMesh == null || orientationMaterial == null || trailLengthSlider.value == 0f) return;
 
-        if (motionData.pRH != null && index < motionData.pRH.Count)
+        if (!isShowAllMode && trailLengthSlider.value == 0f) return;
+
+        int step = Mathf.Max(1, Mathf.RoundToInt(Mathf.Lerp(10, 1, orientationDensitySlider.value)));
+
+        // 提前計算好旋轉偏移量的四元數，節省迴圈內的運算效能
+        Quaternion offsetQuat = Quaternion.Euler(orientationRotationOffset);
+
+        int startIdx = isShowAllMode ? 0 : trailStartIndex;
+        int endIdx = isShowAllMode ? (motionData.timeStamp.Count - 1) : currentFrameIndex;
+
+        for (int i = startIdx; i <= endIdx; i++)
         {
-            rhObj.transform.position = motionData.pRH[index].ToVector3();
-            rhObj.transform.rotation = motionData.rRH[index].ToQuaternion();
+            if (i % step == 0)
+            {
+                // 將原始的旋轉資料 (例如 hmdRot[i]) 乘上 offsetQuat，達到疊加局部旋轉的效果
+                if (hmdObj.activeSelf)
+                    Graphics.DrawMesh(orientationMesh, Matrix4x4.TRS(hmdPos[i], hmdRot[i] * offsetQuat, orientationScale), orientationMaterial, 0);
+
+                if (rcObj.activeSelf)
+                    Graphics.DrawMesh(orientationMesh, Matrix4x4.TRS(rcPos[i], rcRot[i] * offsetQuat, orientationScale), orientationMaterial, 0);
+
+                if (lcObj.activeSelf)
+                    Graphics.DrawMesh(orientationMesh, Matrix4x4.TRS(lcPos[i], lcRot[i] * offsetQuat, orientationScale), orientationMaterial, 0);
+
+                if (rhObj.activeSelf)
+                    Graphics.DrawMesh(orientationMesh, Matrix4x4.TRS(rhPos[i], rhRot[i] * offsetQuat, orientationScale), orientationMaterial, 0);
+
+                if (lhObj.activeSelf)
+                    Graphics.DrawMesh(orientationMesh, Matrix4x4.TRS(lhPos[i], lhRot[i] * offsetQuat, orientationScale), orientationMaterial, 0);
+            }
         }
+    }
 
-        if (motionData.pLH != null && index < motionData.pLH.Count)
+    private void SetupToggle(Toggle toggle, GameObject obj, LineRenderer line)
+    {
+        // 動態建立軌跡線組件
+        line.startWidth = trailWidth;
+        line.endWidth = trailWidth;
+        line.useWorldSpace = true;
+        // 使用 Unity 預設的無光照材質畫線
+        line.material = new Material(Shader.Find("Sprites/Default"));
+
+        if (toggle)
         {
-            lhObj.transform.position = motionData.pLH[index].ToVector3();
-            lhObj.transform.rotation = motionData.rLH[index].ToQuaternion();
+            LineRenderer refLine = line; // 避免閉包問題
+            toggle.onValueChanged.AddListener(isOn =>
+            {
+                obj.SetActive(isOn);
+                refLine.enabled = isOn;
+                UpdateTrailLines(); // 切換時刷新軌跡
+            });
+        }
+    }
+    private void ToggleDisplayMode()
+    {
+        isShowAllMode = !isShowAllMode;
+        UpdateModeText();
+        UpdateTrailLines(); // 切換模式時立刻強制刷新畫面
+    }
+    private void UpdateModeText()
+    {
+        if (modeButtonText != null)
+        {
+            modeButtonText.text = isShowAllMode ? "Show All" : "Trailing";
         }
     }
 }
