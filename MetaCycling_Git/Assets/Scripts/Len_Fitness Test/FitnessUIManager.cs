@@ -13,9 +13,16 @@ public class FitnessUIManager : MonoBehaviour
 {
     public static FitnessUIManager Instance;
 
-    [Header("UI Indicatiors")]
+    [Header("Bar UI Variables")]
     [SerializeField] private Button startBtn;
     [SerializeField] private Button endBtn;
+    [SerializeField] private Button settingUIBtn;
+    [SerializeField] private Image settingUISpr;
+    [SerializeField] private Button speedUIBtn;
+    [SerializeField] private Image speedUISpr;
+
+    [Header("Settings UI Variables")]
+    [SerializeField] private GameObject settingsRadialGameObj;
     [SerializeField] private Button changeDisplayBtn;
     [SerializeField] private TMP_Text changeDisplayBtnText;
     [SerializeField] private Button resetBtn;
@@ -25,7 +32,8 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private TMP_Text sliderInfo;
     [SerializeField] private TMP_Text fpsText;
 
-    [Header("Bar UI Buttons")]
+    [Header("Radial Speed UI Buttons")]
+    [SerializeField] private GameObject speedRadialGameObj;
     [SerializeField] private Button playBtn;
     [SerializeField] private Button playRewindBtn;
     [SerializeField] private Button pauseBtn;
@@ -37,7 +45,7 @@ public class FitnessUIManager : MonoBehaviour
     private float slowId = 1;
 
     //this is for visualization for users
-    [Header("Bar UI Visuals")]
+    [Header("UI Visual Feedback")]
     [SerializeField] private TMP_Text barInfo;
     [SerializeField] private GameObject playIcon;
     [SerializeField] private GameObject playRewindIcon;
@@ -62,10 +70,10 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private Button sortListBtn;
     [SerializeField] private TMP_Text sortListText;
 
-    [Header("Position Indicators")]
-    [SerializeField] private GameObject startPrefab;
-    [SerializeField] private TMP_Text moveDistText;
-    [SerializeField] private TMP_Text heightTxt;
+    //[Header("Position Indicators")]
+    //[SerializeField] private GameObject startPrefab;
+    //[SerializeField] private TMP_Text moveDistText;
+    //[SerializeField] private TMP_Text heightTxt;
 
     [Header("special")]
     [SerializeField] private UIPlayerMovementStats m_stats;
@@ -86,9 +94,12 @@ public class FitnessUIManager : MonoBehaviour
     //recording effect bcs its not apparent enough
     private Coroutine recordingAnimationCoroutine;
     private float simulatedRecordingTime = 0f;
-    private const float RECORDING_TICK_RATE = 0.015f;
 
     public Action<string> OnMovementTypeChanged;
+
+    //button color
+    private Color32 activeColor = new Color32(118, 118, 118, 255);
+    private Color32 defaultColor = Color.white;
 
     private void Awake()
     {
@@ -111,17 +122,36 @@ public class FitnessUIManager : MonoBehaviour
         sortListText.text = m_replay.isSortByName ? "name" : "time";
         hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
 
+        //setup ddl
         ddlMotionType.ClearOptions();
         List<string> options = new List<string>(motionSelection);
         ddlMotionType.AddOptions(options);
 
+        //make sure no motion type is selected
         motType = motionSelection[0];
         m_stats.ClearDisplay();
 
+        //make sure the name input UI is disabled
         nameInpGameObj.SetActive(false);
+        speedRadialGameObj.SetActive(false);
+        settingsRadialGameObj.SetActive(false);
 
         #region recording btn setup
         startBtn.onClick.AddListener(() => {
+            //check radial fuckers first
+            if(speedRadialGameObj.activeSelf == true || settingsRadialGameObj.activeSelf == true)
+            {
+                speedRadialGameObj.SetActive(false);
+                speedUISpr.color = Color.white;
+
+                settingsRadialGameObj.SetActive(false);
+                settingUISpr.color = Color.white;
+
+                m_stats.ChangeDisplayActiveState(false);
+                return;
+            }
+
+            //if none are active do the normal thing
             nameInpGameObj.SetActive(true);
             barGameObj.SetActive(false);
             m_stats.ClearDisplay();
@@ -160,8 +190,8 @@ public class FitnessUIManager : MonoBehaviour
                 if (!jumpRes.success)
                     return;
 
-                moveDistText.text = $"Moved {jumpRes.distance} cm";
-                heightTxt.text = $"Highest point {jumpRes.height} cm";
+                //moveDistText.text = $"Moved {jumpRes.distance} cm";
+                //heightTxt.text = $"Highest point {jumpRes.height} cm";
                 isPlaying = !isPlaying;
 
                 startBtn.gameObject.SetActive(true);
@@ -176,12 +206,54 @@ public class FitnessUIManager : MonoBehaviour
                 ActivateIcon("");
                 barInfo.text = $"";
 
+                //resets to 1x speed
                 m_path.speedMult = 1f;
                 fastId = 1; rewindId = 1; slowId = 1;
-                barInfo.text = "x 1.0";
+                barInfo.text = "Replaying...";
+                playBtn.gameObject.SetActive(false);
+                pauseBtn.gameObject.SetActive(true);
             }
             m_stats.UpdateMovementType(motType, false);
-            m_stats.ChangeDisplay(motType);
+            m_stats.ChangeDisplay(motType, true);
+        });
+
+        #endregion
+
+        #region display buttons
+        settingUIBtn.onClick.AddListener(() =>
+        {
+            if (speedRadialGameObj.activeSelf)
+            {
+                speedRadialGameObj.SetActive(false);
+                speedUISpr.color = defaultColor;
+            }
+
+            bool isCurrentlyActive = settingsRadialGameObj.activeSelf;
+            bool nextState = !isCurrentlyActive;
+
+            settingsRadialGameObj.SetActive(nextState);
+
+            settingUISpr.color = nextState ? activeColor : defaultColor;
+
+            m_stats.ChangeDisplayActiveState(!nextState);
+        });
+
+        speedUIBtn.onClick.AddListener(() =>
+        {
+            if (settingsRadialGameObj.activeSelf)
+            {
+                settingsRadialGameObj.SetActive(false);
+                settingUISpr.color = defaultColor;
+            }
+
+            bool isCurrentlyActive = speedRadialGameObj.activeSelf;
+            bool nextState = !isCurrentlyActive;
+
+            speedRadialGameObj.SetActive(nextState);
+
+            speedUISpr.color = nextState ? activeColor : defaultColor;
+
+            m_stats.ChangeDisplayActiveState(!nextState);
         });
 
         #endregion
@@ -202,14 +274,16 @@ public class FitnessUIManager : MonoBehaviour
             CheckDisplayType();
         });
 
-        resetBtn.onClick.AddListener(m_fitness.ClearTrackingData);
+        resetBtn.onClick.AddListener(()=> { 
+            m_fitness.ClearTrackingData();
+        });
 
         #region Name Setup
         ddlMotionType.onValueChanged.AddListener(delegate {
             motType = motionSelection[ddlMotionType.value];
             m_recorder.ChangeMotionType(motType);
 
-            m_stats.ChangeDisplay(motType);
+            m_stats.ChangeDisplay(motType, false);
 
             ddlMotionType.Hide();
 
@@ -265,12 +339,26 @@ public class FitnessUIManager : MonoBehaviour
         });
 
         #endregion
+
         #region playback buttons bar setup
         playBtn.onClick.AddListener(() => {
+            playBtn.gameObject.SetActive(false);
+            pauseBtn.gameObject.SetActive(true);
+
             m_path.speedMult = 1f;
             fastId = 1; rewindId = 1; slowId = 1;
             barInfo.text = "x 1.0"; 
             ActivateIcon(playIcon.name);
+        });
+
+        pauseBtn.onClick.AddListener(() => {
+            playBtn.gameObject.SetActive(true);
+            pauseBtn.gameObject.SetActive(false);
+
+            m_path.speedMult = 0f;
+            fastId = 1; rewindId = 1; slowId = 1;
+            barInfo.text = "Paused";
+            ActivateIcon(pauseIcon.name);
         });
 
         playRewindBtn.onClick.AddListener(() => {
@@ -280,15 +368,9 @@ public class FitnessUIManager : MonoBehaviour
             ActivateIcon(playRewindIcon.name);
         });
 
-        pauseBtn.onClick.AddListener(() => {
-            m_path.speedMult = 0f;
-            fastId = 1; rewindId = 1; slowId = 1;
-            barInfo.text = "Paused";
-            ActivateIcon(pauseIcon.name);
-        });
-
         fastBtn.onClick.AddListener(() => {
-            switch(fastId){
+            rewindId = 1; slowId = 1;
+            switch (fastId){
                 case 1:
                     m_path.speedMult = 1.5f;
                     barInfo.text = $"x 1.5";
@@ -308,27 +390,36 @@ public class FitnessUIManager : MonoBehaviour
         });
 
         fastRewindBtn.onClick.AddListener(() => {
+            fastId = 1; slowId = 1;
             switch (rewindId)
             {
                 case 1:
-                    m_path.speedMult = -1.5f;
-                    barInfo.text = $"x 1.5";
+                    m_path.speedMult = -1f;
+                    barInfo.text = $"x 1";
+                    ActivateIcon(playRewindIcon.name);
                     break;
                 case 2:
-                    m_path.speedMult = -2f;
-                    barInfo.text = $"x 2.0";
+                    m_path.speedMult = -1.5f;
+                    barInfo.text = $"x 1.5";
+                    ActivateIcon(fastRewindIcon.name);
                     break;
                 case 3:
+                    m_path.speedMult = -2f;
+                    barInfo.text = $"x 2.0";
+                    ActivateIcon(fastRewindIcon.name);
+                    break;
+                case 4:
                     m_path.speedMult = -3f;
                     barInfo.text = $"x 3.0";
+                    ActivateIcon(fastRewindIcon.name);
                     break;
             }
             rewindId++;
-            if (rewindId > 3) rewindId = 1;
-            ActivateIcon(fastRewindIcon.name);
+            if (rewindId > 4) rewindId = 1;
         });
 
         slowBtn.onClick.AddListener(() => {
+            fastId = 1; rewindId = 1; 
             switch (slowId)
             {
                 case 1:
@@ -362,7 +453,7 @@ public class FitnessUIManager : MonoBehaviour
 
     private void Update()
     {
-        startPrefab.SetActive(m_fitness.calibratedStartPos != Vector3.zero);
+        //startPrefab.SetActive(m_fitness.calibratedStartPos != Vector3.zero);
 
         float fps = 1.0f / Time.unscaledDeltaTime;
         fpsText.text = $"FPS: {Mathf.Ceil(fps)}";

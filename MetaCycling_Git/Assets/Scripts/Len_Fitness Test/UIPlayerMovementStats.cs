@@ -33,8 +33,12 @@ public class UIPlayerMovementStats : MonoBehaviour
     {
         infoText.text = "";
     }
+    public void ChangeDisplayActiveState(bool _b)
+    {
+        infoText.gameObject.SetActive(_b);
+    }
 
-    public void ChangeDisplay(string type)
+    public void ChangeDisplay(string type, bool _printInfo)
     {
         FetchMotionData();
 
@@ -42,25 +46,25 @@ public class UIPlayerMovementStats : MonoBehaviour
         switch (type.ToLower())
         {
             case "vertical jump":
-                HandleVerticalJump();
+                HandleVerticalJump(_printInfo);
                 break;
             case "long jump":
-                HandleLongJump();
+                HandleLongJump(_printInfo);
                 break;
             case "jump rope":
-                HandleJumpRope();
+                HandleJumpRope(_printInfo);
                 break;
             case "speed walking":
-                HandleWalking(true);
+                HandleWalking(true, _printInfo);
                 break;
             case "walking":
-                HandleWalking(false);
+                HandleWalking(false, _printInfo);
                 break;
             case "row machine":
-                HandleRowing();
+                HandleRowing(_printInfo);
                 break;
             case "others":
-                HandleWalking(true);
+                HandleWalking(true, _printInfo);
                 break;
         }
     }
@@ -203,7 +207,7 @@ public class UIPlayerMovementStats : MonoBehaviour
         rHandMotionPoints = m_path.rHandMotionPoints;
         lHandMotionPoints = m_path.lHandMotionPoints;
     }
-    private void HandleVerticalJump()
+    private void HandleVerticalJump( bool _printInfo)
     {
         // We look for the highest Y point reached by the HMD (head) or Hands
         float maxY = -Mathf.Infinity;
@@ -224,10 +228,11 @@ public class UIPlayerMovementStats : MonoBehaviour
 
         float startHeight = start.y;
         float jumpHeight = (maxY - startHeight) * 100f;
-        infoText.text = $"Est. Height: {startHeight*100f:F1}cm \n Highest Point: {jumpHeight:F1} cm \n JumpHeight: {jumpHeight:F1} cm";
+        if(_printInfo)
+            infoText.text = $"Est. Height: {startHeight*100f:F1}cm \n Highest Point: {jumpHeight:F1} cm \n JumpHeight: {jumpHeight:F1} cm";
     }
 
-    private void HandleLongJump()
+    private void HandleLongJump(bool _printInfo)
     {
         if (hmdMotionPoints.Count < 2) return;
 
@@ -237,9 +242,10 @@ public class UIPlayerMovementStats : MonoBehaviour
         start.y = 0; end.y = 0;
 
         float dist = CalcDist(start, end)* 100f;
-        infoText.text = $"Jump Distance: {dist:F1} cm";
+        if(_printInfo)
+            infoText.text = $"Jump Distance: {dist:F1} cm";
     }
-    private void HandleJumpRope()
+    private void HandleJumpRope(bool _printInfo)
     {
         if (hmdMotionPoints.Count < 10) return;
 
@@ -277,11 +283,11 @@ public class UIPlayerMovementStats : MonoBehaviour
             // If the user's standing height drifts, slowly nudge floorY
             // floorY = Mathf.Lerp(floorY, currentY, 0.001f); 
         }
-
-        infoText.text = $"Est. jumps: {jumps-1}";
+        if(_printInfo)
+            infoText.text = $"Est. jumps: {jumps-1}";
     }
 
-    private void HandleRowing()
+    private void HandleRowing(bool _printInfo)
     {
         int reps = 0;
         float maxSpeed = 0;
@@ -346,12 +352,11 @@ public class UIPlayerMovementStats : MonoBehaviour
                 }
             }
         }
-
-        infoText.text = $"Reps: {reps}\n" +
-                        $"Max Speed: {maxSpeed:F1} m/s";
+        if(_printInfo)
+            infoText.text = $"Reps: {reps}\n" + $"Max Speed: {maxSpeed:F1} m/s";
     }
 
-    private void HandleWalking(bool speedStats)
+    private void HandleWalking(bool speedStats, bool _printinfo)
     {
         float totalDist = 0;
         float maxSpeed = 0;
@@ -375,6 +380,8 @@ public class UIPlayerMovementStats : MonoBehaviour
                 if (smoothedSpeed > maxSpeed) maxSpeed = smoothedSpeed;
             }
         }
+        if (!_printinfo)
+            return;
         if (speedStats)
         {
             infoText.text = $"traveled {totalDist:F1}m\n" +

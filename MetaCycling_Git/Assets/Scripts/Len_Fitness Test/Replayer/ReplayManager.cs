@@ -128,6 +128,11 @@ public class ReplayManager : MonoBehaviour
     public void SpawnReplay(ReplayData savedData, Vector3 savedOffset)
     {
         calibratedStartpos = new Vector3(m_Fitness.calibratedStartPos.x, 0, m_Fitness.calibratedStartPos.z);
+        if (calibratedStartpos == Vector3.zero)
+        {
+            calibratedStartpos = new Vector3(m_Path.HMD_Transform.position.x, 0, m_Path.HMD_Transform.position.z);
+            ;
+        }
 
         ReplayData adjustedData = new ReplayData
         {
