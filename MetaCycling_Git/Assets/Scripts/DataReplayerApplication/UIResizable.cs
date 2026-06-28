@@ -81,6 +81,6 @@ public class UIResizable : MonoBehaviour, IDragHandler, IBeginDragHandler
         }
 
         windowToResize.sizeDelta = newSize;
-        textureHolder.sizeDelta = new Vector2(newSize.x, newSize.x);
+        textureHolder.sizeDelta = newSize;
     }
 }

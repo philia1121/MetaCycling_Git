@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using System.IO;
 using SFB;
 using TMPro;
@@ -49,6 +50,12 @@ public class DataReplayer : MonoBehaviour
     // 👇 新增這行來控制面向物件的初始旋轉補償
     [Tooltip("面向物件的基礎旋轉偏移量 (修正建模與Unity的軸向差異)")]
     public Vector3 orientationRotationOffset = new Vector3(-90f, 0f, 0f);
+    
+    [Header("影片同步對照")]
+    public VideoPlayer videoPlayer;      // 👇 綁定 Unity 的 VideoPlayer
+    public TMP_InputField syncDelayInput;    // 👇 讓使用者輸入延遲秒數的 UI (例如輸入 0.15)
+    private float syncDelay = 0.15f;     // 預設影片比 JSON 慢 0.15 秒
+
 
     private StorageRecordData motionData;
     private bool isPlaying = false;
@@ -60,6 +67,7 @@ public class DataReplayer : MonoBehaviour
     private Quaternion[] hmdRot, rcRot, lcRot, rhRot, lhRot;
 
     // --- 軌跡渲染器 ---
+    [Header("軌跡渲染器")]
     public LineRenderer hmdLine, rcLine, lcLine, rhLine, lhLine;
 
     // --- 當前播放狀態紀錄 ---
@@ -70,7 +78,13 @@ public class DataReplayer : MonoBehaviour
     {
         // 綁定檔案讀取與播放事件
         loadButton.onClick.AddListener(SelectAndLoadFile);
-        playPauseButton.onClick.AddListener(() => isPlaying = !isPlaying);
+        playPauseButton.onClick.AddListener(() => {
+            isPlaying = !isPlaying;
+            if (!isPlaying && videoPlayer != null)
+            {
+                videoPlayer.Pause();
+            }
+        });
 
         // 處理 Slider 拖拉 (Scrubbing)
         timelineSlider.onValueChanged.AddListener(OnTimelineScrub);
@@ -95,6 +109,18 @@ public class DataReplayer : MonoBehaviour
             UpdateModeText();
         }
 
+        if (syncDelayInput != null)
+        {
+            syncDelayInput.text = syncDelay.ToString("F3");
+            syncDelayInput.onValueChanged.AddListener(val => {
+                if (float.TryParse(val, out float res))
+                {
+                    syncDelay = res;
+                    SyncVideoTime(); // 數值改變時立刻強制更新影片畫面
+                }
+            });
+        }
+
         // 當特效滑桿數值改變時，強制更新畫面
         if (trailLengthSlider) trailLengthSlider.onValueChanged.AddListener(_ => UpdateTrailLines());
     }
@@ -102,14 +128,57 @@ public class DataReplayer : MonoBehaviour
     #region Select and Load File
     public void SelectAndLoadFile()
     {
-        var paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "", true);
+        var paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "", false);
         if (paths.Length > 0)
         {
-            string fullPath = paths[0];
-            LoadJson(fullPath);
+            AutoLoadPair(paths[0]);
+        }
+    }
+    private void AutoLoadPair(string selectedPath)
+    {
+        string fileName = Path.GetFileNameWithoutExtension(selectedPath);
+        string currentDir = Path.GetDirectoryName(selectedPath);
+        
+        // 取得上一層資料夾 (也就是你的 "A資料夾")
+        DirectoryInfo parentDirInfo = Directory.GetParent(currentDir);
+        
+        if (parentDirInfo == null) 
+        {
+            Debug.LogWarning("無法解析上一層資料夾！");
+            return;
+        }
 
-            string fileName = Path.GetFileName(fullPath);
-            fileNameText.text = fileName;
+        string rootDir = parentDirInfo.FullName;
+
+        // 在 A 資料夾底下全域搜尋同名的 .json 與 .mp4
+        string[] jsonFiles = Directory.GetFiles(rootDir, fileName + ".json", SearchOption.AllDirectories);
+        string[] mp4Files = Directory.GetFiles(rootDir, fileName + ".mp4", SearchOption.AllDirectories);
+
+        string jsonPath = jsonFiles.Length > 0 ? jsonFiles[0] : null;
+        string mp4Path = mp4Files.Length > 0 ? mp4Files[0] : null;
+
+        // 將 InputField 顯示為當前載入的檔名 (比較乾淨)
+        fileNameText.text = fileName;
+
+        // 分別執行讀取
+        if (!string.IsNullOrEmpty(jsonPath))
+        {
+            Debug.Log("載入 JSON: " + jsonPath);
+            LoadJson(jsonPath);
+        }
+        else
+        {
+            Debug.LogWarning("找不到對應的 JSON 檔案！");
+        }
+
+        if (!string.IsNullOrEmpty(mp4Path))
+        {
+            Debug.Log("載入 MP4: " + mp4Path);
+            LoadVideo(mp4Path);
+        }
+        else
+        {
+            Debug.LogWarning("找不到對應的 MP4 檔案！");
         }
     }
 
@@ -130,6 +199,20 @@ public class DataReplayer : MonoBehaviour
 
             CacheMotionData();
             UpdateFrame(currentTime);
+            UpdateTrailLines();
+            SyncVideoTime();
+        }
+    }
+    private void LoadVideo(string path)
+    {
+        if (videoPlayer != null)
+        {
+            // Unity 的 VideoPlayer 可以直接吃本機絕對路徑 (Url)
+            videoPlayer.source = VideoSource.Url;
+            videoPlayer.url = path;
+            
+            // 呼叫 Prepare 讓影片在背景預先載入，避免播放瞬間卡頓
+            videoPlayer.Prepare(); 
         }
     }
 
@@ -163,6 +246,30 @@ public class DataReplayer : MonoBehaviour
             // 使用 SetValueWithoutNotify 避免觸發 Slider 的 onValueChanged 產生無窮迴圈
             timelineSlider.SetValueWithoutNotify(currentTime);
             UpdateFrame(currentTime);
+
+            // 處理播放時的影片同步防漂移 (Drift Correction)
+            if (videoPlayer != null)
+            {
+                float expectedVideoTime = currentTime - syncDelay;
+
+                // 如果 JSON 剛開始播，但還沒到影片開始的時間 (例如 JSON 的前 0.15 秒)
+                if (expectedVideoTime < 0f)
+                {
+                    if (videoPlayer.isPlaying) videoPlayer.Pause();
+                    videoPlayer.time = 0f;
+                }
+                else
+                {
+                    // 確保影片處於播放狀態
+                    if (!videoPlayer.isPlaying) videoPlayer.Play();
+
+                    // Unity VideoPlayer 播放時會有微小的時間漂移，超過 0.05 秒強制校正
+                    if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.05f)
+                    {
+                        videoPlayer.time = expectedVideoTime;
+                    }
+                }
+            }
         }
 
         DrawOrientations();
@@ -174,6 +281,22 @@ public class DataReplayer : MonoBehaviour
 
         currentTime = value;
         UpdateFrame(currentTime);
+        SyncVideoTime(); // 拖拉時強制影片跳躍到對應影格
+    }
+
+    // 精準計算並設定影片時間
+    private void SyncVideoTime()
+    {
+        if (videoPlayer == null || motionData == null) return;
+
+        float expectedVideoTime = currentTime - syncDelay;
+
+        if (expectedVideoTime < 0f)
+        {
+            expectedVideoTime = 0f; // 影片尚未開始
+        }
+        
+        videoPlayer.time = expectedVideoTime;
     }
 
     private void UpdateFrame(float time)
