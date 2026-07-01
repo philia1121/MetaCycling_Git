@@ -104,6 +104,9 @@ public class TrajectoryRecorder : MonoBehaviour
             if (cor != null) StopCoroutine(cor);
             cor = StartCoroutine(RecordRoutine());
             Debug.Log("start recording");
+
+            NetworkRecordingManager.Instance.RequestStartRecord($"{filePrefix}_{recordData.recordTime}");
+
         }
     }
     public void StopRecording()
@@ -116,6 +119,8 @@ public class TrajectoryRecorder : MonoBehaviour
             if (cor != null) StopCoroutine(cor);
             SaveToFile();
             Debug.Log("stop recording");
+            NetworkRecordingManager.Instance.RequestEndRecord();
+
         }
     }
 

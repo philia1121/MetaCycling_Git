@@ -23,14 +23,36 @@ public class FitnessUIManager : MonoBehaviour
 
     [Header("Settings UI Variables")]
     [SerializeField] private GameObject settingsRadialGameObj;
-    [SerializeField] private Button changeDisplayBtn;
-    [SerializeField] private TMP_Text changeDisplayBtnText;
-    [SerializeField] private Button resetBtn;
-    [SerializeField] private Button hideBtn;
-    [SerializeField] private TMP_Text hideInfo;
-    [SerializeField] private Slider densitySlider;
-    [SerializeField] private TMP_Text sliderInfo;
-    [SerializeField] private TMP_Text fpsText;
+    [SerializeField] private GameObject[] radialBgArray;
+    [SerializeField] private Button radialNextBtn;           
+    [SerializeField] private Button radialBackBtn;
+    [SerializeField] private TMP_Text radialPageInfo;           //text of current settings page just in case
+    private int currSettingsIndex = 0;
+
+    [Header("Page 1")]
+    [SerializeField] private Button changeDisplayBtn;           //change the viewing style
+    [SerializeField] private TMP_Text changeDisplayBtnText;     //text of current viewing style
+    [SerializeField] private Button joinRoomBtn;                //join room swaps with quitRoom
+    [SerializeField] private Button quitRoomBtn;                //quit room swaps with joinRoom
+    [SerializeField] private Button densityButton;              //pops up the slider
+    [SerializeField] private Slider densitySlider;              //updates the slider
+    [SerializeField] private TMP_Text sliderInfo;               //gives visual feedback to player on the slider
+    [SerializeField] private Button resetBtn;                   //reset current prefabs, make them dissapear completely
+    [SerializeField] private TMP_Text fpsText;                  //display fps value
+    [Header("Page 2")]
+    [SerializeField] private Button hideFloatingHeadBtn;        //hide the replaying statue head
+    [SerializeField] private TMP_Text hideFloatingHeadText;        //hide the replaying statue head
+    [SerializeField] private Button hideFloatingMenuBtn;        //hide the replay menu
+    [SerializeField] private TMP_Text hideFloatingMenuText;        //hide the replay menu
+    [SerializeField] private Button hideBtn;                    //disable the head and hand prefab
+    [SerializeField] private TMP_Text hideInfo;                 //tells if its hidden or not
+
+    [Header("Network Related")]
+    [SerializeField] private GameObject roomInpGameObj;         //parent for this header
+    [SerializeField] private TMP_InputField roomInp;            //room name input field
+    [SerializeField] private Button roomJoimBtn;                //join this room
+    [SerializeField] private Button roomCancelBtn;              //closes the parent without joining the room
+    [SerializeField] private TMP_Text connText;
 
     [Header("Radial Speed UI Buttons")]
     [SerializeField] private GameObject speedRadialGameObj;
@@ -67,6 +89,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private Button nameCancelBtn;
 
     [Header("Replay List UI")]
+    [SerializeField] private GameObject sortListGameObj;
     [SerializeField] private Button sortListBtn;
     [SerializeField] private TMP_Text sortListText;
 
@@ -83,6 +106,7 @@ public class FitnessUIManager : MonoBehaviour
     private PathVisualizer m_path;
     private ReplayManager m_replay;
     private TrajectoryRecorder_Config m_recorder;
+    private NetworkRecordingManager m_network;
 
     private string motType;
     private string playerName;
@@ -113,6 +137,7 @@ public class FitnessUIManager : MonoBehaviour
         m_path = PathVisualizer.instance;
         m_replay = ReplayManager.instance;
         m_recorder = TrajectoryRecorder_Config.instance;
+        m_network = NetworkRecordingManager.Instance;
 
         CheckDisplayType();
         //endBtn.interactable = false;
@@ -133,48 +158,50 @@ public class FitnessUIManager : MonoBehaviour
 
         //make sure the name input UI is disabled
         nameInpGameObj.SetActive(false);
+        roomInpGameObj.SetActive(false);
         speedRadialGameObj.SetActive(false);
         settingsRadialGameObj.SetActive(false);
 
-        #region recording btn setup
-        startBtn.onClick.AddListener(() => {
-            //check radial fuckers first
-            if(speedRadialGameObj.activeSelf == true || settingsRadialGameObj.activeSelf == true)
+        m_network.OnRoomJoined+= CheckRoomState;
+        m_network.OnNetworkConnected += CheckNetworkState;
+
+        #region Start and Stop recording
+
+
+        nameStartBtn.onClick.AddListener(() =>
+        {
+            string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
+            m_recorder.ChangeUserName(nameToSave);
+
+            nameInpGameObj.SetActive(false);
+            barGameObj.SetActive(true);
+
+            m_fitness.StartMovement(success =>
             {
-                speedRadialGameObj.SetActive(false);
-                speedUISpr.color = Color.white;
+                if (success)
+                {
+                    isPlaying = true;
 
-                settingsRadialGameObj.SetActive(false);
-                settingUISpr.color = Color.white;
+                    startBtn.gameObject.SetActive(false);
+                    endBtn.gameObject.SetActive(true);
 
-                m_stats.ChangeDisplayActiveState(false);
-                return;
-            }
+                    speedUIBtn.gameObject.SetActive(false);
+                    settingUIBtn.gameObject.SetActive(false);
 
-            //if none are active do the normal thing
-            nameInpGameObj.SetActive(true);
-            barGameObj.SetActive(false);
-            m_stats.ClearDisplay();
+                    ActivateIcon(recordingIcon.name);
 
-            //moved to the startName btn
+                    //barInfo.text = "Recording"; GIVE RECORDING EFFECT
+                    m_stats.ClearDisplay();
 
-            //start moving if isplaying false
-            //if (!isPlaying)
-            //    m_fitness.StartMovement(success => {
-            //        if (!success)
-            //            return;
-            //        jumpRes = new JumpResult();
-            //        isPlaying = !isPlaying;
+                    if (recordingAnimationCoroutine != null) StopCoroutine(recordingAnimationCoroutine);
+                    recordingAnimationCoroutine = StartCoroutine(RecordingAnimationRoutine());
 
-            //        startBtn.gameObject.SetActive(false);
-            //        endBtn.gameObject.SetActive(true);
+                    m_stats.UpdateMovementType(motType, true);
+                }
+            });
 
-            //        startBtn.interactable = false;
-            //        endBtn.interactable = true;
-            //    });
-            //or end moving if isplaying is true
-            //ActivateIcon(recordingIcon.name);
-            //barInfo.text = $"Recording";
+            if (UnityEngine.EventSystems.EventSystem.current != null)
+                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         });
 
         endBtn.onClick.AddListener(() => {
@@ -190,15 +217,10 @@ public class FitnessUIManager : MonoBehaviour
                 if (!jumpRes.success)
                     return;
 
-                //moveDistText.text = $"Moved {jumpRes.distance} cm";
-                //heightTxt.text = $"Highest point {jumpRes.height} cm";
                 isPlaying = !isPlaying;
 
                 startBtn.gameObject.SetActive(true);
                 endBtn.gameObject.SetActive(false);
-
-                //startBtn.interactable = true;
-                //endBtn.interactable = false;
 
                 densitySlider.value = 1;
 
@@ -210,8 +232,12 @@ public class FitnessUIManager : MonoBehaviour
                 m_path.speedMult = 1f;
                 fastId = 1; rewindId = 1; slowId = 1;
                 barInfo.text = "Replaying...";
+
                 playBtn.gameObject.SetActive(false);
                 pauseBtn.gameObject.SetActive(true);
+
+                speedUIBtn.gameObject.SetActive(true);
+                settingUIBtn.gameObject.SetActive(true);
             }
             m_stats.UpdateMovementType(motType, false);
             m_stats.ChangeDisplay(motType, true);
@@ -220,6 +246,7 @@ public class FitnessUIManager : MonoBehaviour
         #endregion
 
         #region display buttons
+        //this is for settings
         settingUIBtn.onClick.AddListener(() =>
         {
             if (speedRadialGameObj.activeSelf)
@@ -228,15 +255,35 @@ public class FitnessUIManager : MonoBehaviour
                 speedUISpr.color = defaultColor;
             }
 
-            bool isCurrentlyActive = settingsRadialGameObj.activeSelf;
-            bool nextState = !isCurrentlyActive;
+            bool nextState = !settingsRadialGameObj.activeSelf;
 
             settingsRadialGameObj.SetActive(nextState);
 
             settingUISpr.color = nextState ? activeColor : defaultColor;
 
+            barInfo.gameObject.SetActive(!nextState);
+            densitySlider.gameObject.SetActive(!nextState);
+
             m_stats.ChangeDisplayActiveState(!nextState);
         });
+
+        if (radialBgArray.Length <= 1)
+        {
+            radialNextBtn.gameObject.SetActive(false);
+            radialBackBtn.gameObject.SetActive(false);
+            radialPageInfo.gameObject.SetActive(false);
+            radialBgArray[0].SetActive(true);
+        }
+        else
+        {
+            radialNextBtn.onClick.RemoveAllListeners();
+            radialNextBtn.onClick.AddListener(() => ChangePage(1));
+
+            radialBackBtn.onClick.RemoveAllListeners();
+            radialBackBtn.onClick.AddListener(() => ChangePage(-1));
+
+            ChangePage(0);
+        }
 
         speedUIBtn.onClick.AddListener(() =>
         {
@@ -246,17 +293,24 @@ public class FitnessUIManager : MonoBehaviour
                 settingUISpr.color = defaultColor;
             }
 
-            bool isCurrentlyActive = speedRadialGameObj.activeSelf;
-            bool nextState = !isCurrentlyActive;
+            bool nextState = !speedRadialGameObj.activeSelf;
 
             speedRadialGameObj.SetActive(nextState);
 
             speedUISpr.color = nextState ? activeColor : defaultColor;
 
+            barInfo.gameObject.SetActive(!nextState);
+
             m_stats.ChangeDisplayActiveState(!nextState);
         });
 
         #endregion
+
+        #region settings button page 1
+
+        densityButton.onClick.AddListener(() => {
+            densitySlider.gameObject.SetActive(!densitySlider.gameObject.activeSelf);
+        });
 
         densitySlider.onValueChanged.AddListener((float _i)=> {
             m_path.OnDensityChanged(_i);
@@ -276,9 +330,65 @@ public class FitnessUIManager : MonoBehaviour
 
         resetBtn.onClick.AddListener(()=> { 
             m_fitness.ClearTrackingData();
+            barInfo.text = $"";
+        });
+        #endregion
+
+        #region settings button page 2
+        hideFloatingHeadBtn.onClick.AddListener(() => { 
+            bool _b = PlayerReplayBox.instance.DisableMesh();
+            hideFloatingHeadText.text = _b ? "Disable Floating Menu" : "Enable Floating Menu";
         });
 
+        hideFloatingMenuBtn.onClick.AddListener(() => { 
+            sortListGameObj.SetActive(!sortListGameObj.activeSelf);
+            hideFloatingMenuText.text = sortListGameObj.activeSelf ? "Disable Statue Replay" : "Enable Statue Replay";
+        });
+
+        roomJoimBtn.onClick.AddListener(() => { 
+            m_network.JoinRoomBtnClick(roomInp, roomJoimBtn);
+            roomInp.text = "";
+        });
+
+        joinRoomBtn.onClick.AddListener(() =>
+        {
+            settingsRadialGameObj.SetActive(false); 
+            roomInpGameObj.SetActive(true);
+        });
+
+        roomCancelBtn.onClick.AddListener(() => {
+            settingsRadialGameObj.SetActive(true);
+            roomInpGameObj.SetActive(false);
+        });
+
+        quitRoomBtn.onClick.AddListener(() => {
+            m_network.RequestLeaveRoom();
+        });
+        #endregion
+
         #region Name Setup
+
+        //make name panel opens
+        startBtn.onClick.AddListener(() => {
+            //check radial fuckers first
+            if (speedRadialGameObj.activeSelf == true || settingsRadialGameObj.activeSelf == true)
+            {
+                speedRadialGameObj.SetActive(false);
+                speedUISpr.color = Color.white;
+
+                settingsRadialGameObj.SetActive(false);
+                settingUISpr.color = Color.white;
+
+                m_stats.ChangeDisplayActiveState(false);
+                return;
+            }
+
+            //if none are active do the normal thing
+            nameInpGameObj.SetActive(true);
+            barGameObj.SetActive(false);
+            m_stats.ClearDisplay();
+        });
+
         ddlMotionType.onValueChanged.AddListener(delegate {
             motType = motionSelection[ddlMotionType.value];
             m_recorder.ChangeMotionType(motType);
@@ -297,39 +407,6 @@ public class FitnessUIManager : MonoBehaviour
 
         nameInp.onValueChanged.AddListener(delegate {
             playerName = nameInp.text;
-        });
-
-        nameStartBtn.onClick.AddListener(() =>
-        {
-            string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
-            m_recorder.ChangeUserName(nameToSave);
-
-            nameInpGameObj.SetActive(false);
-            barGameObj.SetActive(true);
-
-            m_fitness.StartMovement(success =>
-            {
-                if (success)
-                {
-                    isPlaying = true;
-
-                    startBtn.gameObject.SetActive(false);
-                    endBtn.gameObject.SetActive(true);
-
-                    ActivateIcon(recordingIcon.name);
-
-                    //barInfo.text = "Recording"; GIVE RECORDING EFFECT
-                    m_stats.ClearDisplay(); 
-
-                    if (recordingAnimationCoroutine != null) StopCoroutine(recordingAnimationCoroutine);
-                    recordingAnimationCoroutine = StartCoroutine(RecordingAnimationRoutine());
-
-                    m_stats.UpdateMovementType(motType, true);
-                }
-            });
-
-            if (UnityEngine.EventSystems.EventSystem.current != null)
-                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
         });
 
         nameCancelBtn.onClick.AddListener(() => {
@@ -520,5 +597,41 @@ public class FitnessUIManager : MonoBehaviour
         recordingIcon.SetActive(recordingIcon.name == name );
         recordingIconText.SetActive(recordingIcon.name == name );
         slowIcon.SetActive(slowIcon.name == name );
+    }
+
+    private void CheckNetworkState(bool _conn)
+    {
+        connText.text = _conn ? $"connecting..." : "connected!";
+        joinRoomBtn.interactable = _conn;
+        quitRoomBtn.interactable = _conn;
+    }
+
+    private void CheckRoomState(bool _room)
+    {
+        joinRoomBtn.gameObject.SetActive(!_room);
+        quitRoomBtn.gameObject.SetActive(_room);
+
+        if (_room && roomInpGameObj.activeSelf)
+            roomInpGameObj.SetActive(false);
+
+        connText.text = _room ? $"room joined!" : "room left";
+
+    }
+
+    private void ChangePage(int direction)
+    {
+        radialBgArray[currSettingsIndex].SetActive(false);
+        currSettingsIndex += direction;
+
+        currSettingsIndex = Mathf.Clamp(currSettingsIndex, 0, radialBgArray.Length - 1);
+        radialBgArray[currSettingsIndex].SetActive(true);
+
+        radialBackBtn.interactable = (currSettingsIndex > 0);
+        radialNextBtn.interactable = (currSettingsIndex < radialBgArray.Length - 1);
+
+        if (radialPageInfo != null)
+        {
+            radialPageInfo.text = $" {currSettingsIndex + 1} / {radialBgArray.Length}";
+        }
     }
 }

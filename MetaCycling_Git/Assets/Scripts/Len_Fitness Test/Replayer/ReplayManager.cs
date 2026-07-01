@@ -127,31 +127,67 @@ public class ReplayManager : MonoBehaviour
 
     public void SpawnReplay(ReplayData savedData, Vector3 savedOffset)
     {
+        //get init start pos so replay can spawn on player
         calibratedStartpos = new Vector3(m_Fitness.calibratedStartPos.x, 0, m_Fitness.calibratedStartPos.z);
         if (calibratedStartpos == Vector3.zero)
         {
             calibratedStartpos = new Vector3(m_Path.HMD_Transform.position.x, 0, m_Path.HMD_Transform.position.z);
-            ;
+            
+        }
+
+        //calc the rotation
+        Quaternion deltaRotation = Quaternion.identity;
+
+        if (savedData.hmdMotionPoints != null && m_Path.hmdMotionPoints != null)
+        {
+            //sampling the movement of the first .075 seconds
+            Vector3 pastDir = savedData.hmdMotionPoints[4].position - savedData.hmdMotionPoints[0].position;
+            pastDir.y = 0;
+
+            Vector3 currentDir = m_Path.hmdMotionPoints[4].position - m_Path.hmdMotionPoints[0].position;
+            currentDir.y = 0;
+
+            if (currentDir == Vector3.zero)
+            {
+                currentDir = m_Path.HMD_Transform.forward;
+                currentDir.y = 0; 
+            }
+            if (currentDir == Vector3.zero)
+            {
+                currentDir = m_Path.HMD_Transform.up;
+                currentDir.y = 0;
+            }
+
+            if (pastDir != Vector3.zero && currentDir != Vector3.zero)
+            {
+                deltaRotation = Quaternion.FromToRotation(pastDir.normalized, currentDir.normalized);
+            }
         }
 
         ReplayData adjustedData = new ReplayData
         {
-            hmdMotionPoints = OffsetPointList(savedData.hmdMotionPoints, savedOffset, calibratedStartpos),
-            lHandMotionPoints = OffsetPointList(savedData.lHandMotionPoints, savedOffset, calibratedStartpos),
-            rHandMotionPoints = OffsetPointList(savedData.rHandMotionPoints, savedOffset, calibratedStartpos)
+            hmdMotionPoints = OffsetPointList(savedData.hmdMotionPoints, savedOffset, calibratedStartpos, deltaRotation),
+            lHandMotionPoints = OffsetPointList(savedData.lHandMotionPoints, savedOffset, calibratedStartpos, deltaRotation),
+            rHandMotionPoints = OffsetPointList(savedData.rHandMotionPoints, savedOffset, calibratedStartpos, deltaRotation)
         };
 
         m_Path.DisplayGhostPath(adjustedData);
     }
 
-    private List<MotionPointSimple> OffsetPointList(List<MotionPointSimple> points, Vector3 oldOrigin, Vector3 newOrigin)
+    private List<MotionPointSimple> OffsetPointList(List<MotionPointSimple> points, Vector3 oldOrigin, Vector3 newOrigin, Quaternion deltaRot)
     {
         List<MotionPointSimple> offsetList = new List<MotionPointSimple>();
 
         foreach (var p in points)
         {
             //brain not working but prolly => (Original Point - Old Start Position) + New Start Position
-            Vector3 alignedPos = (p.position - oldOrigin) + newOrigin;
+            //Vector3 alignedPos = (p.position - oldOrigin) + newOrigin;
+
+            Vector3 localRelativePos = p.position - oldOrigin;
+            Vector3 alignedPos = newOrigin + (deltaRot * localRelativePos);
+
+            alignedPos.y = p.position.y;
+            Quaternion alignedRot = deltaRot * p.rotation;
 
             offsetList.Add(new MotionPointSimple
             {

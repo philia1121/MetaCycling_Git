@@ -1,6 +1,7 @@
 using Oculus.Interaction.PoseDetection;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,6 +56,15 @@ public class PlayerReplayBox : MonoBehaviour
             EndReplay();
         }
     }
+
+    public bool DisableMesh()
+    {
+        statueHead.gameObject.SetActive(!statueHead.gameObject.activeSelf);
+        statueLHand.gameObject.SetActive(!statueLHand.gameObject.activeSelf);
+        statueRHand.gameObject.SetActive(!statueRHand.gameObject.activeSelf);
+
+        return statueHead.gameObject.activeSelf;
+}
 
     public void StartReplay(List<MotionPointSimple> head, List<MotionPointSimple> left, List<MotionPointSimple> right)
     {

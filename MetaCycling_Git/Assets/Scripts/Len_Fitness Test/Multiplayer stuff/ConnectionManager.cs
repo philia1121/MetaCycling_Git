@@ -17,7 +17,7 @@ public class ConnectionManager : MonoBehaviour
 
     // 1. SET YOUR STATIC IP HERE FOR THE CLIENT
     // Change this to match whatever your host PC prints on its screen!
-    private const string STATIC_SERVER_IP = "172.25.128.1";
+    private const string STATIC_SERVER_IP = "10.64.248.181";
 
     void Start()
     {
@@ -90,22 +90,55 @@ public class ConnectionManager : MonoBehaviour
     }
 
     // Helper method to dig out the actual local IP address interface
+
     private string GetLocalIPAddress()
     {
         foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
         {
-            if (ni.OperationalStatus == OperationalStatus.Up &&
-                ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+            // Safety filter: Ensure the adapter is actively running
+            if (ni.OperationalStatus == OperationalStatus.Up)
             {
-                foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                // CRITICAL FIX: Skip virtual interfaces (WSL, Hyper-V, VirtualBox, vEthernet)
+                string name = ni.Name.ToLower();
+                string desc = ni.Description.ToLower();
+                if (name.Contains("virtual") || name.Contains("wsl") || name.Contains("vbox") || name.Contains("ethernet") ||
+                    desc.Contains("virtual") || desc.Contains("hyper-v") || desc.Contains("subsystem"))
                 {
-                    if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                    continue; // Skip this virtual interface and look for the real Wi-Fi card!
+                }
+
+                // Only grab Wireless (Wi-Fi) interface profiles
+                if (ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 ||
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Ethernet)
+                {
+                    foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
                     {
-                        return ip.Address.ToString();
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            return ip.Address.ToString();
+                        }
                     }
                 }
             }
         }
-        return "IP NOT FOUND (Check Wi-Fi connection)";
+        return "IP NOT FOUND (Ensure PC is connected to the Hotspot)";
     }
+    //private string GetLocalIPAddress()
+    //{
+    //    foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+    //    {
+    //        if (ni.OperationalStatus == OperationalStatus.Up &&
+    //            ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+    //        {
+    //            foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+    //            {
+    //                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+    //                {
+    //                    return ip.Address.ToString();
+    //                }
+    //            }
+    //        }
+    //    }
+    //    return "IP NOT FOUND (Check Wi-Fi connection)";
+    //}
 }
