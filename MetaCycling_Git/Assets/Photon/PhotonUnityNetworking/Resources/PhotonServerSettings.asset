@@ -41,6 +41,12 @@ MonoBehaviour:
   - RespawnSpaceship
   - RPC_StartWebcamRecordingStream
   - RPC_StopWebcamRecordingStream
+  - RPC_FinalizeJsonDataStream
+  - RPC_InitializeJsonStreamHeader
+  - RPC_ReceiveJsonDataChunk
+  - RPC_FinalizeDataStream
+  - RPC_InitializeDataStreamHeader
+  - RPC_ReceiveDataChunk
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0

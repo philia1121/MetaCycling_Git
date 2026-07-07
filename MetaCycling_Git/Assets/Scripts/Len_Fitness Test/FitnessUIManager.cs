@@ -348,11 +348,20 @@ public class FitnessUIManager : MonoBehaviour
         roomJoimBtn.onClick.AddListener(() => { 
             m_network.JoinRoomBtnClick(roomInp, roomJoimBtn);
             roomInp.text = "";
+
+            bool nextState = false;
+            settingsRadialGameObj.SetActive(nextState);
+            settingUISpr.color = nextState ? activeColor : defaultColor;
+            barInfo.gameObject.SetActive(!nextState);
+            densitySlider.gameObject.SetActive(!nextState);
+            m_stats.ChangeDisplayActiveState(!nextState);
         });
 
         joinRoomBtn.onClick.AddListener(() =>
         {
-            settingsRadialGameObj.SetActive(false); 
+            //back to main bar basically
+            settingsRadialGameObj.SetActive(false);
+
             roomInpGameObj.SetActive(true);
         });
 
@@ -604,6 +613,7 @@ public class FitnessUIManager : MonoBehaviour
         connText.text = _conn ? $"connecting..." : "connected!";
         joinRoomBtn.interactable = _conn;
         quitRoomBtn.interactable = _conn;
+
     }
 
     private void CheckRoomState(bool _room)
@@ -615,7 +625,6 @@ public class FitnessUIManager : MonoBehaviour
             roomInpGameObj.SetActive(false);
 
         connText.text = _room ? $"room joined!" : "room left";
-
     }
 
     private void ChangePage(int direction)

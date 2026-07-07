@@ -4,8 +4,10 @@ using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
@@ -40,6 +42,10 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     [SerializeField] private Camera overlayCamera;
     [SerializeField] private TMP_Text infoText;
 
+    [Header("Spawn Settings")]
+    [SerializeField] private GameObject playerFab;
+    [SerializeField] private GameObject observer;
+
     public static NetworkRecordingManager Instance;
 
     public Action<bool> OnNetworkConnected;
@@ -49,6 +55,13 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     private WebCamTexture activeWebCamTexture;
     private string webcamName;
 
+    private GameObject spawnedLocalVRPlayer;
+
+    //to help save the data to write in PC
+    private StorageRecordData compiledSessionRecordData = new StorageRecordData(); private string currentSessionUser = "";
+    private string currentSessionMotion = "";
+    private string currentSessionTime = "";
+    private float currentSessionInterval = 0.015f;
     private void Awake()
     {
         if (Instance == null)
@@ -336,6 +349,32 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public void RequestStreamInit(string userName, string motionType, float sampleInterval, string recordTime)
+    {
+        if (!PhotonNetwork.InRoom) return;
+
+        photonView.RPC("RPC_InitializeDataStreamHeader",
+                       RpcTarget.MasterClient,
+                       userName,
+                       motionType,
+                       sampleInterval,
+                       recordTime);
+    }
+
+    public void RequestStreamChunk(string[] serializedWaypoints)
+    {
+        if (!PhotonNetwork.InRoom || serializedWaypoints == null || serializedWaypoints.Length == 0) return;
+
+        photonView.RPC("RPC_ReceiveDataChunk", RpcTarget.MasterClient, (object)serializedWaypoints);
+    }
+
+    public void RequestFinalizeStream(string[] finalWaypoints, string targetFileName)
+    {
+        if (!PhotonNetwork.InRoom) return;
+
+        photonView.RPC("RPC_FinalizeDataStream", RpcTarget.MasterClient, (object)finalWaypoints, targetFileName);
+    }
+
     #endregion
 
     #region Photon Callbacks
@@ -373,6 +412,13 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
             //if (joinRoomBtn != null) joinRoomBtn.interactable = true; // Reset state tracking
 
             SetupUI(requestRecordingPanel.name);
+
+            if (spawnedLocalVRPlayer == null)
+            {
+                observer.SetActive(false);
+
+                spawnedLocalVRPlayer = PhotonNetwork.Instantiate(playerFab.name, Vector3.zero, Quaternion.identity);
+            }
         }
         OnRoomJoined?.Invoke(true);
     }
@@ -469,6 +515,145 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 #endif
 
         SetupUI(webcamSelectPanelObj.name);
+    }
+
+    [PunRPC]
+    public void RPC_InitializeDataStreamHeader(string userName, string motionType, float sampleInterval, string recordTime)
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        // Reset memory containers for the new recording iteration
+        compiledSessionRecordData = new StorageRecordData();
+
+        compiledSessionRecordData.timeStamp = new List<double>();
+        compiledSessionRecordData.pHMD = new List<SerializableVector3>();
+        compiledSessionRecordData.rHMD = new List<SerializableQuaternion>();
+        compiledSessionRecordData.pLC = new List<SerializableVector3>();
+        compiledSessionRecordData.rLC = new List<SerializableQuaternion>();
+        compiledSessionRecordData.pRC = new List<SerializableVector3>();
+        compiledSessionRecordData.rRC = new List<SerializableQuaternion>();
+        compiledSessionRecordData.pLH = new List<SerializableVector3>();
+        compiledSessionRecordData.rLH = new List<SerializableQuaternion>();
+        compiledSessionRecordData.pRH = new List<SerializableVector3>();
+        compiledSessionRecordData.rRH = new List<SerializableQuaternion>();
+
+        compiledSessionRecordData.ptRH = new List<bool>();
+        compiledSessionRecordData.rtRH = new List<bool>();
+        compiledSessionRecordData.ptRC = new List<bool>();
+        compiledSessionRecordData.rtRC = new List<bool>();
+        compiledSessionRecordData.ptLH = new List<bool>();
+        compiledSessionRecordData.rtLH = new List<bool>();
+        compiledSessionRecordData.ptLC = new List<bool>();
+        compiledSessionRecordData.rtLC = new List<bool>();
+
+        // Set top-level metadata values
+        compiledSessionRecordData.userName = userName;
+        compiledSessionRecordData.motionType = motionType;
+        compiledSessionRecordData.recordTime = recordTime;
+        compiledSessionRecordData.sampleInterval = System.Math.Round(sampleInterval, 4);
+
+        if (infoText != null)
+        {
+            infoText.text = $"<color=\"yellow\">Data Stream Started</color>\nUser: {userName}\nTime: {recordTime}";
+        }
+    }
+
+    [PunRPC]
+    public void RPC_ReceiveDataChunk(string[] waypointsChunk)
+    {
+        if (!PhotonNetwork.IsMasterClient || waypointsChunk == null) return;
+
+        // Unpack the incoming serialized lines and store them directly as structural data in memory
+        foreach (string serializedWp in waypointsChunk)
+        {
+            var wp = Newtonsoft.Json.JsonConvert.DeserializeObject<MultiTrackWaypoint>(serializedWp);
+            if (wp != null) AppendWaypointToRecordContainer(wp);
+        }
+
+        if (infoText != null)
+        {
+            infoText.text = $"<color=\"yellow\">Streaming Tracking Logs...</color>\nBuffered waypoints: {compiledSessionRecordData.timeStamp.Count}";
+        }
+    }
+
+    [PunRPC]
+    public void RPC_FinalizeDataStream(string[] finalWaypoints, string targetFileName)
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        // Add any remaining elements from the final data flush push
+        if (finalWaypoints != null)
+        {
+            foreach (string serializedWp in finalWaypoints)
+            {
+                var wp = Newtonsoft.Json.JsonConvert.DeserializeObject<MultiTrackWaypoint>(serializedWp);
+                if (wp != null)
+                {
+                    AppendWaypointToRecordContainer(wp);
+                }
+            }
+        }
+
+        // Serialize the container using your format (Indented formatting matches the template)
+        string alignedJsonOutput = Newtonsoft.Json.JsonConvert.SerializeObject(compiledSessionRecordData, Newtonsoft.Json.Formatting.Indented);
+
+        // Save the file cleanly to PC storage
+        SaveStreamedContentToDisk(targetFileName, alignedJsonOutput);
+
+        // Clear the data container from memory
+        compiledSessionRecordData = null;
+    }
+
+    #endregion
+
+    #region Write To Disk
+    private void AppendWaypointToRecordContainer(MultiTrackWaypoint wp)
+    {
+        // Deconstruct the multi-track waypoint to fill the target data columns
+        compiledSessionRecordData.timeStamp.Add(wp.timestamp);
+        compiledSessionRecordData.pHMD.Add(wp.pos_HMD);
+        compiledSessionRecordData.rHMD.Add(wp.rot_HMD);
+
+        compiledSessionRecordData.pLC.Add(wp.pos_LCont);
+        compiledSessionRecordData.rLC.Add(wp.rot_LCont);
+        compiledSessionRecordData.pRC.Add(wp.pos_RCont);
+        compiledSessionRecordData.rRC.Add(wp.rot_RCont);
+
+        compiledSessionRecordData.pLH.Add(wp.pos_LHand);
+        compiledSessionRecordData.rLH.Add(wp.rot_LHand);
+        compiledSessionRecordData.pRH.Add(wp.pos_RHand);
+        compiledSessionRecordData.rRH.Add(wp.rot_RHand);
+
+        compiledSessionRecordData.ptRH.Add(wp.RHand_PosTracked);
+        compiledSessionRecordData.rtRH.Add(wp.RHand_RotTracked);
+        compiledSessionRecordData.ptRC.Add(wp.RCont_PosTracked);
+        compiledSessionRecordData.rtRC.Add(wp.RCont_RotTracked);
+        compiledSessionRecordData.ptLH.Add(wp.LHand_PosTracked);
+        compiledSessionRecordData.rtLH.Add(wp.LHand_RotTracked);
+        compiledSessionRecordData.ptLC.Add(wp.LCont_PosTracked);
+        compiledSessionRecordData.rtLC.Add(wp.LCont_RotTracked);
+    }
+
+    private void SaveStreamedContentToDisk(string fileName, string fullFileContent)
+    {
+        try
+        {
+            string folderPath = Path.Combine(Application.persistentDataPath, "StreamedFiles");
+            Directory.CreateDirectory(folderPath);
+
+            string fullPath = Path.Combine(folderPath, $"{fileName}.json");
+            File.WriteAllText(fullPath, fullFileContent);
+
+            Debug.Log($"[PC Save Success] Clean JSON compiled and saved at: {fullPath}");
+            if (infoText != null)
+            {
+                infoText.text = $"<color=\"green\">File compiled & saved to PC!</color>\nName: {fileName}.json";
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"Failed to commit compiled stream file payload down to PC disk: {ex.Message}");
+        }
     }
 
     #endregion
