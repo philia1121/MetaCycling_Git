@@ -484,6 +484,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Zoom"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""fe40c30f-f8ac-488f-ac0d-ef6b57bcaa39"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1102,6 +1111,17 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""ReCenter"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9af1a97c-d112-4ea9-9868-17d3c2e73c2c"",
+                    ""path"": ""<Mouse>/scroll/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -1146,6 +1166,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_Record = m_Prototype.FindAction("Record", throwIfNotFound: true);
         m_Prototype_Delete = m_Prototype.FindAction("Delete", throwIfNotFound: true);
         m_Prototype_ReCenter = m_Prototype.FindAction("ReCenter", throwIfNotFound: true);
+        m_Prototype_Zoom = m_Prototype.FindAction("Zoom", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1385,6 +1406,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_Record;
     private readonly InputAction m_Prototype_Delete;
     private readonly InputAction m_Prototype_ReCenter;
+    private readonly InputAction m_Prototype_Zoom;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -1411,6 +1433,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @Record => m_Wrapper.m_Prototype_Record;
         public InputAction @Delete => m_Wrapper.m_Prototype_Delete;
         public InputAction @ReCenter => m_Wrapper.m_Prototype_ReCenter;
+        public InputAction @Zoom => m_Wrapper.m_Prototype_Zoom;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1486,6 +1509,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @ReCenter.started += instance.OnReCenter;
             @ReCenter.performed += instance.OnReCenter;
             @ReCenter.canceled += instance.OnReCenter;
+            @Zoom.started += instance.OnZoom;
+            @Zoom.performed += instance.OnZoom;
+            @Zoom.canceled += instance.OnZoom;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -1556,6 +1582,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @ReCenter.started -= instance.OnReCenter;
             @ReCenter.performed -= instance.OnReCenter;
             @ReCenter.canceled -= instance.OnReCenter;
+            @Zoom.started -= instance.OnZoom;
+            @Zoom.performed -= instance.OnZoom;
+            @Zoom.canceled -= instance.OnZoom;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -1613,5 +1642,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnRecord(InputAction.CallbackContext context);
         void OnDelete(InputAction.CallbackContext context);
         void OnReCenter(InputAction.CallbackContext context);
+        void OnZoom(InputAction.CallbackContext context);
     }
 }

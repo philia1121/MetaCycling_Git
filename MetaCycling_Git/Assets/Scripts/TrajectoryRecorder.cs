@@ -1,17 +1,18 @@
+using Firebase.Extensions;
+using Firebase.Firestore;
+using Firebase.Storage;
+using Google.MiniJSON;
+using Newtonsoft.Json;
+using Photon.Pun;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.IO;
-using System.Text;
-using UnityEngine.InputSystem;
 using System.Net;
-using Firebase.Firestore;
+using System.Text;
 using System.Threading.Tasks;
-using Firebase.Extensions;
-using Google.MiniJSON;
-using System;
-using Firebase.Storage;
-using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TrajectoryRecorder : MonoBehaviour
 {
@@ -27,6 +28,11 @@ public class TrajectoryRecorder : MonoBehaviour
     public string savedFolder = "SoA";
     string m_user = "";
     string m_motion = "";
+
+    [Header("Network Streaming Buffers")]
+    private List<string> networkArrayBuffer = new List<string>();   //accumulate data and flush
+    private float lastNetworkFlushTime;                                     
+    private float networkFlushInterval = 0.5f;                      //send data every how many seconds
 
     // Aos
     private TrajectorySession currentSession;
@@ -104,6 +110,14 @@ public class TrajectoryRecorder : MonoBehaviour
             if (cor != null) StopCoroutine(cor);
             cor = StartCoroutine(RecordRoutine());
             Debug.Log("start recording");
+
+            // Empty caching states
+            networkArrayBuffer.Clear();
+            lastNetworkFlushTime = Time.time;
+
+            string filename = $"{filePrefix}_{recordData.recordTime}";
+            NetworkRecordingManager.Instance.RequestStartRecord(filename);
+
         }
     }
     public void StopRecording()
@@ -116,6 +130,17 @@ public class TrajectoryRecorder : MonoBehaviour
             if (cor != null) StopCoroutine(cor);
             SaveToFile();
             Debug.Log("stop recording");
+
+            // Extract what leftover points remain unpushed inside our cache array list
+            string[] finalRemainingChunk = networkArrayBuffer.ToArray();
+            networkArrayBuffer.Clear();
+
+            string filename = $"{filePrefix}_{recordData.recordTime}";
+
+            // Send the clean array block over along with the intended file name string
+            NetworkRecordingManager.Instance.RequestFinalizeStream(finalRemainingChunk, filename);
+            NetworkRecordingManager.Instance.RequestEndRecord();
+
         }
     }
 
@@ -141,11 +166,40 @@ public class TrajectoryRecorder : MonoBehaviour
         recordData.motionType = m_motion;
         recordData.recordTime = $"{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}";
         recordData.sampleInterval = Math.Round(recordInterval, 4);
+
+        NetworkRecordingManager.Instance.RequestStreamInit(
+                    recordData.userName,
+                    recordData.motionType,
+                    (float)recordData.sampleInterval,
+                    recordData.recordTime
+                );
     }
     void OnRecord()
     {
         UpdateNewWayPoint();
         UpdateNewRecordData();
+
+        // Convert newest waypoint to JSON fragment
+        if (currentSession.waypoints.Count > 0)
+        {
+            var latestWaypoint = currentSession.waypoints[currentSession.waypoints.Count - 1];
+            string flatWpJson = JsonConvert.SerializeObject(latestWaypoint);
+            networkArrayBuffer.Add(flatWpJson);
+        }
+
+        // check .5 buffer
+        if (Time.time - lastNetworkFlushTime >= networkFlushInterval)
+        {
+            if (networkArrayBuffer.Count > 0)
+            {
+                // change to network array buffer
+                string[] chunkToSend = networkArrayBuffer.ToArray();
+                networkArrayBuffer.Clear();
+
+                NetworkRecordingManager.Instance.RequestStreamChunk(chunkToSend);
+            }
+            lastNetworkFlushTime = Time.time;
+        }
     }
     void UpdateNewWayPoint()
     {

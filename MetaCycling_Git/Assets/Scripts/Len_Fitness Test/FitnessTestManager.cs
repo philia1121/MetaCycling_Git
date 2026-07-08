@@ -72,14 +72,11 @@ public class FitnessTestManager : MonoBehaviour
 
     void Awake()
     {
-        trajectoryRecorder = TrajectoryRecorder.instance;
-
-        controlMap = new ControlMap();
-        controlMap.Prototype.Enable();
-
         if (instance == null)
             instance = this;
 
+        controlMap = new ControlMap();
+        controlMap.Prototype.Enable();
 
         #region jump dist buttons and calc
         //spawn the planes n calc
@@ -139,7 +136,6 @@ public class FitnessTestManager : MonoBehaviour
         };
 
         #endregion
-
 
         //swap tracking
         //controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
@@ -212,6 +208,9 @@ public class FitnessTestManager : MonoBehaviour
         hmdColl = trackedGameObject.GetComponent<SphereCollider>();
         if( hmdColl != null )
             hmdColl.radius = toleranceDist;
+
+        trajectoryRecorder = TrajectoryRecorder.instance;
+        path = PathVisualizer.instance;
 
         calibratedStartPos = new Vector3(hmdGameObject.transform.position.x, 0, hmdGameObject.transform.position.z);
     }
@@ -303,20 +302,6 @@ public class FitnessTestManager : MonoBehaviour
 
             InstantiatePoints();
         }));
-
-
-    }
-    private void SwapTracked()
-    {
-        trackedGameObject = trackedGameObject == hmdGameObject
-            ? rightArmGameObject
-            : hmdGameObject;
-        etcTxt.text = $"Tracking: {(trackedGameObject == hmdGameObject ? "head" : "right hand")}, tag: {trackedGameObject.tag}";
-
-        trackedGameObject.transform.localScale = new Vector3(toleranceDist, toleranceDist, toleranceDist);
-        SphereCollider c = trackedGameObject.GetComponent<SphereCollider>();
-        c.radius = toleranceDist;
-
     }
 
     public IEnumerator CalibratePos(Action<Vector3> callback)

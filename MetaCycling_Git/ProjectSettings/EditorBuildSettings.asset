@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/Scenes/MetaCyclingJC.unity
     guid: f6486b3f7144dfa4f911ffe739a20f21
   - enabled: 0
-    path: Assets/Scenes/FitnessTest.unity
+    path: Assets/Scenes/_FitnessTest.unity
     guid: 0e74fe990a35cf545b41265247787ee3
   - enabled: 0
     path: Assets/Scenes/_Host_Fitness.unity
@@ -24,11 +24,14 @@ EditorBuildSettings:
     path: Assets/Scenes/Temp.unity
     guid: 5db2d58d9a394864db9424bcd73d538a
   - enabled: 0
-    path: Assets/Scenes/_Req_LostDistCheck.unity
+    path: Assets/Scenes/Req_LostDistCheck.unity
     guid: 6c997c24a310218408fb887b71b05487
+  - enabled: 0
+    path: Assets/Scenes/NetworkTest.unity
+    guid: 6e73acc9daa8b43469db76879368923a
   - enabled: 1
-    path: Assets/Scenes/ReplayApplication.unity
-    guid: fbc03cd32fdb72b49827ca7fd407fb65
+    path: Assets/Scenes/_NetworkFitness.unity
+    guid: ddda08b4764301945925509c90cd5705
   m_configObjects:
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: ffdbd9aac1bbe99498358393e4ef133c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 4fe48ac5be0b27f4eb5a9238cc167f66, type: 2}

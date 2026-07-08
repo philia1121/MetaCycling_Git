@@ -1,0 +1,2 @@
+[FOR PHOTON NETWORKING]
+to ensure that the name for both the video recording AND the recordTime variable in the json is the same, networking will be done inside the "TrajectoryRecorder" script
