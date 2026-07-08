@@ -457,6 +457,19 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         infoText.text = $"VR Headset left or disconnected.";
+
+        if (otherPlayer.IsMasterClient)
+        {
+            Debug.LogWarning("PC Master Client left the session. Forcing VR Client shutdown loop...");
+            infoText.text = "<color=\"red\">Room closed by host. Disconnecting...</color>";
+
+            // Explicitly force the VR client to leave the defunct room session
+            PhotonNetwork.LeaveRoom();
+        }
+        else
+        {
+            infoText.text = $"Remote user left or disconnected.";
+        }
     }
 
     public override void OnLeftRoom()
