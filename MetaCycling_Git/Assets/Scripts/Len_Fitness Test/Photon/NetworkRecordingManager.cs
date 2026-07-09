@@ -11,6 +11,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 {
@@ -24,6 +25,8 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     [SerializeField] private TMP_Dropdown ddlWebcam;
     [SerializeField] private Button refreshWebcamListBtn;
     [SerializeField] private Button closeRoomBtn;
+    [SerializeField] private GameObject alertPanel;
+    [SerializeField] private TMP_Text clientInfo;
 
     [Header("Join Room Panel Items")]
     [SerializeField] private GameObject joinRoomPanelObj;
@@ -452,7 +455,9 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     //these 2 only fires on the one that creates the room
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
-        infoText.text = $"VR Headset connected: {newPlayer.NickName ?? "Headset"}";
+        infoText.text = $"VR Headset connected";
+        alertPanel.SetActive(false);
+
     }
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
@@ -469,6 +474,7 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         else
         {
             infoText.text = $"Remote user left or disconnected.";
+            alertPanel.SetActive(true);
         }
     }
 
@@ -515,6 +521,10 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.IsMasterClient) return;
 
         infoText.text = "<color=\"green\">Recording saved successfully to PC Storage!</color>";
+        if (clientInfo != null)
+        {
+            clientInfo.text = $"";
+        }
 
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN
         if (WebcamToMP4.instance != null)
@@ -565,9 +575,11 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         compiledSessionRecordData.recordTime = recordTime;
         compiledSessionRecordData.sampleInterval = System.Math.Round(sampleInterval, 4);
 
-        if (infoText != null)
+        if (clientInfo != null)
         {
-            infoText.text = $"<color=\"yellow\">Data Stream Started</color>\nUser: {userName}\nTime: {recordTime}";
+            clientInfo.text = $"<Username: {userName}" +
+                $"\nMotion Type: {motionType}" +
+                $"\nRecord Time: {recordTime}";
         }
     }
 
