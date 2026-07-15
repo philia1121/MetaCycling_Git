@@ -171,7 +171,7 @@ public class ThirdPersonCamera : MonoBehaviour
         if (Mathf.Abs(_scrollDelta) > 0.01f)
         {
             _targetFOV -= Mathf.Sign(_scrollDelta) * 2f;
-            _targetFOV = Mathf.Clamp(_targetFOV, 45f, 80f);
+            _targetFOV = Mathf.Clamp(_targetFOV, 25f, 120f);
 
             this.targetFOV = _targetFOV;
         }

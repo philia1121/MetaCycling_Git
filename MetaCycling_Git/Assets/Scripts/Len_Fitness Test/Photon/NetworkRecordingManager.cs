@@ -11,7 +11,6 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 using UnityEngine.XR.Interaction.Toolkit.UI;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 {
