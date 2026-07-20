@@ -9,8 +9,10 @@ public class ReplayDataContainer : MonoBehaviour
 
     private ReplayManager _m;
     private List<MotionPointSimple> hmdMotionPoints = new List<MotionPointSimple>();
-    private List<MotionPointSimple> rHandMotionPoints = new List<MotionPointSimple>();
+    private List<MotionPointSimple> lContMotionPoints = new List<MotionPointSimple>();
+    private List<MotionPointSimple> rContMotionPoints = new List<MotionPointSimple>();
     private List<MotionPointSimple> lHandMotionPoints = new List<MotionPointSimple>();
+    private List<MotionPointSimple> rHandMotionPoints = new List<MotionPointSimple>();
 
     [SerializeField] private Button btn;
 
@@ -44,6 +46,8 @@ public class ReplayDataContainer : MonoBehaviour
 
         //just in case
         hmdMotionPoints.Clear();
+        lContMotionPoints.Clear();
+        rContMotionPoints.Clear();
         lHandMotionPoints.Clear();
         rHandMotionPoints.Clear();
 
@@ -62,17 +66,27 @@ public class ReplayDataContainer : MonoBehaviour
             }
             hmdMotionPoints.Add(lastHmd);
 
-            // 2. Process Left Hand
             if (wp.pos_LCont.ToVector3().sqrMagnitude > 0.001f)
             {
                 lastLHand = new MotionPointSimple { position = wp.pos_LCont.ToVector3(), rotation = wp.rot_LCont.ToQuaternion() };
             }
-            lHandMotionPoints.Add(lastLHand);
+            lContMotionPoints.Add(lastLHand);
 
-            // 3. Process Right Hand
             if (wp.pos_RCont.ToVector3().sqrMagnitude > 0.001f)
             {
                 lastRHand = new MotionPointSimple { position = wp.pos_RCont.ToVector3(), rotation = wp.rot_RCont.ToQuaternion() };
+            }
+            rContMotionPoints.Add(lastRHand);
+
+            if (wp.pos_LHand.ToVector3().sqrMagnitude > 0.001f)
+            {
+                lastLHand = new MotionPointSimple { position = wp.pos_LHand.ToVector3(), rotation = wp.rot_LHand.ToQuaternion() };
+            }
+            lHandMotionPoints.Add(lastLHand);
+
+            if (wp.pos_RHand.ToVector3().sqrMagnitude > 0.001f)
+            {
+                lastRHand = new MotionPointSimple { position = wp.pos_RHand.ToVector3(), rotation = wp.rot_RHand.ToQuaternion() };
             }
             rHandMotionPoints.Add(lastRHand);
         }
@@ -80,7 +94,7 @@ public class ReplayDataContainer : MonoBehaviour
         if (btn == null) btn = GetComponent<Button>();
         btn.onClick.RemoveAllListeners();
         btn.onClick.AddListener(ReturnData);
-        return (rHandMotionPoints.Count.ToString());
+        return (rContMotionPoints.Count.ToString());
     }
 
     public void ReturnData()
@@ -88,8 +102,10 @@ public class ReplayDataContainer : MonoBehaviour
         ReplayData data = new ReplayData
         {
             hmdMotionPoints = this.hmdMotionPoints,
+            lContMotionPoints = this.lContMotionPoints,
+            rContMotionPoints = this.rContMotionPoints,
+            lHandMotionPoints = this.lHandMotionPoints,
             rHandMotionPoints = this.rHandMotionPoints,
-            lHandMotionPoints = this.lHandMotionPoints
         };
 
         // Extract the first HMD position for X and Z alignment
@@ -108,6 +124,8 @@ public class ReplayDataContainer : MonoBehaviour
 public class ReplayData
 {
     public List<MotionPointSimple> hmdMotionPoints;
-    public List<MotionPointSimple> rHandMotionPoints;
+    public List<MotionPointSimple> lContMotionPoints;
+    public List<MotionPointSimple> rContMotionPoints;
     public List<MotionPointSimple> lHandMotionPoints;
+    public List<MotionPointSimple> rHandMotionPoints;
 }

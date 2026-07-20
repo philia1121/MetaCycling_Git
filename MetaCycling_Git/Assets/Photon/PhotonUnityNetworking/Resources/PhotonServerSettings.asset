@@ -47,6 +47,7 @@ MonoBehaviour:
   - RPC_FinalizeDataStream
   - RPC_InitializeDataStreamHeader
   - RPC_ReceiveDataChunk
+  - RPC_ForceClientStopRecording
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 0

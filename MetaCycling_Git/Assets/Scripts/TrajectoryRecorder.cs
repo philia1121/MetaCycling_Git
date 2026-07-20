@@ -70,8 +70,8 @@ public class TrajectoryRecorder : MonoBehaviour
     
     void OnEnable()
     {
-        controlMap.Prototype.Enable();
-        controlMap.Prototype.Record.started += ctx => ToggleRecording();
+        //controlMap.Prototype.Enable();
+        //controlMap.Prototype.Record.started += ctx => ToggleRecording();
     }
 
     public void ToggleRecording()
@@ -115,8 +115,11 @@ public class TrajectoryRecorder : MonoBehaviour
             networkArrayBuffer.Clear();
             lastNetworkFlushTime = Time.time;
 
-            string filename = $"{filePrefix}_{recordData.recordTime}";
-            NetworkRecordingManager.Instance.RequestStartRecord(filename);
+            if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+            {
+                string filename = $"{filePrefix}_{recordData.recordTime}";
+                NetworkRecordingManager.Instance.RequestStartRecord(filename);
+            }
 
         }
     }
@@ -131,15 +134,17 @@ public class TrajectoryRecorder : MonoBehaviour
             SaveToFile();
             Debug.Log("stop recording");
 
-            // Extract what leftover points remain unpushed inside our cache array list
-            string[] finalRemainingChunk = networkArrayBuffer.ToArray();
+            if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+            {
+                string[] finalRemainingChunk = networkArrayBuffer.ToArray();
+                string filename = $"{filePrefix}_{recordData.recordTime}";
+
+                // Send the clean array block over along with the intended file name string
+                NetworkRecordingManager.Instance.RequestFinalizeStream(finalRemainingChunk, filename);
+                NetworkRecordingManager.Instance.RequestEndRecord();
+            }
+
             networkArrayBuffer.Clear();
-
-            string filename = $"{filePrefix}_{recordData.recordTime}";
-
-            // Send the clean array block over along with the intended file name string
-            NetworkRecordingManager.Instance.RequestFinalizeStream(finalRemainingChunk, filename);
-            NetworkRecordingManager.Instance.RequestEndRecord();
 
         }
     }
@@ -167,12 +172,15 @@ public class TrajectoryRecorder : MonoBehaviour
         recordData.recordTime = $"{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}";
         recordData.sampleInterval = Math.Round(recordInterval, 4);
 
-        NetworkRecordingManager.Instance.RequestStreamInit(
-                    recordData.userName,
-                    recordData.motionType,
-                    (float)recordData.sampleInterval,
-                    recordData.recordTime
-                );
+        if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+        {
+            NetworkRecordingManager.Instance.RequestStreamInit(
+                recordData.userName,
+                recordData.motionType,
+                (float)recordData.sampleInterval,
+                recordData.recordTime
+            );
+        }
     }
     void OnRecord()
     {
@@ -187,17 +195,18 @@ public class TrajectoryRecorder : MonoBehaviour
             networkArrayBuffer.Add(flatWpJson);
         }
 
-        // check .5 buffer
+        // check .5 buffer window
         if (Time.time - lastNetworkFlushTime >= networkFlushInterval)
         {
-            if (networkArrayBuffer.Count > 0)
+            // PUN CHECKER: Process array flushes to the stream chunk processor only if connected to a network session
+            if (PhotonNetwork.InRoom && networkArrayBuffer.Count > 0 && NetworkRecordingManager.Instance != null)
             {
-                // change to network array buffer
                 string[] chunkToSend = networkArrayBuffer.ToArray();
-                networkArrayBuffer.Clear();
-
                 NetworkRecordingManager.Instance.RequestStreamChunk(chunkToSend);
             }
+
+            // Clear buffer periodically even when offline so memory doesn't pile up infinitely
+            networkArrayBuffer.Clear();
             lastNetworkFlushTime = Time.time;
         }
     }

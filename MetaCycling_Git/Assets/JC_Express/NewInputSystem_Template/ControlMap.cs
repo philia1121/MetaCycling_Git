@@ -493,6 +493,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""MasterControl"",
+                    ""type"": ""Button"",
+                    ""id"": ""8ccd16bd-1c1c-43e5-9c92-649a2d8252b1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1122,6 +1131,50 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""Zoom"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""Two Modifiers"",
+                    ""id"": ""f55f3304-ae85-4768-8b21-84f92f1dd621"",
+                    ""path"": ""TwoModifiers"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MasterControl"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier1"",
+                    ""id"": ""e8e95fc7-2621-46df-838a-e56b87c93908"",
+                    ""path"": ""<XRController>{LeftHand}/{GripButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MasterControl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""modifier2"",
+                    ""id"": ""7c36eace-d758-4af9-91f4-c504879ebd04"",
+                    ""path"": ""<XRController>{LeftHand}/{PrimaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MasterControl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""9d129809-4e00-4140-bfb1-03e4e77d89d1"",
+                    ""path"": ""<XRController>{LeftHand}/{SecondaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MasterControl"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1167,6 +1220,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_Delete = m_Prototype.FindAction("Delete", throwIfNotFound: true);
         m_Prototype_ReCenter = m_Prototype.FindAction("ReCenter", throwIfNotFound: true);
         m_Prototype_Zoom = m_Prototype.FindAction("Zoom", throwIfNotFound: true);
+        m_Prototype_MasterControl = m_Prototype.FindAction("MasterControl", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1407,6 +1461,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_Delete;
     private readonly InputAction m_Prototype_ReCenter;
     private readonly InputAction m_Prototype_Zoom;
+    private readonly InputAction m_Prototype_MasterControl;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -1434,6 +1489,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @Delete => m_Wrapper.m_Prototype_Delete;
         public InputAction @ReCenter => m_Wrapper.m_Prototype_ReCenter;
         public InputAction @Zoom => m_Wrapper.m_Prototype_Zoom;
+        public InputAction @MasterControl => m_Wrapper.m_Prototype_MasterControl;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1512,6 +1568,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
+            @MasterControl.started += instance.OnMasterControl;
+            @MasterControl.performed += instance.OnMasterControl;
+            @MasterControl.canceled += instance.OnMasterControl;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -1585,6 +1644,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
+            @MasterControl.started -= instance.OnMasterControl;
+            @MasterControl.performed -= instance.OnMasterControl;
+            @MasterControl.canceled -= instance.OnMasterControl;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -1643,5 +1705,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnDelete(InputAction.CallbackContext context);
         void OnReCenter(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
+        void OnMasterControl(InputAction.CallbackContext context);
     }
 }

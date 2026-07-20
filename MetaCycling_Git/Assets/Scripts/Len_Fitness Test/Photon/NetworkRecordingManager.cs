@@ -58,12 +58,11 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     private string webcamName;
 
     private GameObject spawnedLocalVRPlayer;
+    private Button activeJoinButtonRef; // button that was disabled during joining
 
     //to help save the data to write in PC
     private StorageRecordData compiledSessionRecordData = new StorageRecordData(); private string currentSessionUser = "";
-    private string currentSessionMotion = "";
-    private string currentSessionTime = "";
-    private float currentSessionInterval = 0.015f;
+
     private void Awake()
     {
         if (Instance == null)
@@ -77,6 +76,19 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         overlayCamera.gameObject.SetActive(false);
 
         StartCoroutine(InitializeDelayedActionCalls());
+    }
+
+    private void Update()
+    {
+        if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
+        {
+            if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+            {
+                Debug.LogWarning("[PC Host] Spacebar pressed. Requesting VR stream termination...");
+                photonView.RPC("RPC_ForceClientStopRecording", RpcTarget.Others);
+                RPC_StopWebcamRecordingStream();
+            }
+        }
     }
 
     private IEnumerator InitializeDelayedActionCalls()
@@ -207,7 +219,6 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.InRoom) 
             PhotonNetwork.LeaveRoom();
-
     }
 
     #endregion
@@ -288,7 +299,8 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         }
 
         // Disable the button instantly so the user can't mash it a second time
-        if (_btn != null) _btn.interactable = false;
+        activeJoinButtonRef = _btn;
+        if (activeJoinButtonRef != null) activeJoinButtonRef.interactable = false; 
         infoText.text = "Joining room...";
 
         if (PhotonNetwork.InLobby)
@@ -388,6 +400,8 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         infoText.text = $"Connected !";
+        
+        isPlatformSetup = false;
         SetupPlatform();
         OnNetworkConnected?.Invoke(true);
     }
@@ -407,11 +421,16 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($" joined to {PhotonNetwork.CurrentRoom.Name}");
 
+        if (activeJoinButtonRef != null)
+        {
+            activeJoinButtonRef.interactable = true;
+            activeJoinButtonRef = null; // Clear out memory
+        }
+
         if (!PhotonNetwork.IsMasterClient)
         {
             infoText.text = $"Joined Room: <color=\"green\">{PhotonNetwork.CurrentRoom.Name}</color>";
             if (requestRecordBtnText != null) requestRecordBtnText.text = "START RECORDING";
-            //if (joinRoomBtn != null) joinRoomBtn.interactable = true; // Reset state tracking
 
             SetupUI(requestRecordingPanel.name);
 
@@ -430,8 +449,11 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         Debug.LogWarning($"Join room failed. Code: {returnCode} Message: {message}");
 
         // room doesnt exist, say room unfound
-        //if (joinRoomBtn != null) joinRoomBtn.interactable = true;
-
+        if (activeJoinButtonRef != null)
+        {
+            activeJoinButtonRef.interactable = true;
+            activeJoinButtonRef = null;
+        }
         if (returnCode == ErrorCode.GameDoesNotExist)
         {
             // Clear out the input text field so the user can re-type
@@ -485,8 +507,10 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
         StopHardwareCamera();
 
         // Reset the layout platform loop cleanly back to the home screens
-        isPlatformSetup = false;
-        SetupPlatform();
+        if (spawnedLocalVRPlayer != null)
+        {
+            spawnedLocalVRPlayer = null;
+        }
 
         infoText.text = "<color=\"red\">Disconnected: Room was closed.</color>";
         OnRoomJoined?.Invoke(false);
@@ -626,6 +650,28 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 
         // Clear the data container from memory
         compiledSessionRecordData = null;
+    }
+
+    [PunRPC]
+    public void RPC_ForceClientStopRecording()
+    {
+        Debug.LogWarning("[VR Client] Remote stop command received from PC Host. Intercepting data loop...");
+
+        if (PhotonNetwork.IsMasterClient) return;
+
+        if (FitnessUIManager.Instance != null && TrajectoryRecorder.instance.isRecording)
+        {
+            FitnessUIManager.Instance.EndRecord();
+
+            this.isCurrentlyRecordingVideo = false;
+            if (requestRecordBtnText != null) requestRecordBtnText.text = "START RECORDING";
+
+            if (infoText != null) infoText.text = "<color=\"red\">Recording stopped remotely by Host.</color>";
+        }
+        else
+        {
+            Debug.LogWarning("[VR Client] Force-stop ignored: Local singleton instance is null or not actively tracking.");
+        }
     }
 
     #endregion

@@ -80,111 +80,111 @@ public class FitnessTestManager : MonoBehaviour
 
         #region jump dist buttons and calc
         //spawn the planes n calc
-        controlMap.Prototype.Right_Trigger.started += ctx => 
-        {
-            return;
-            SpawnJumpPlane(ref spawnedStartJumpPlane, planePrefabStart);
+        //controlMap.Prototype.Right_Trigger.started += ctx => 
+        //{
+        //    return;
+        //    SpawnJumpPlane(ref spawnedStartJumpPlane, planePrefabStart);
 
-            if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
-                return;
+        //    if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
+        //        return;
 
-            float dist = CalcDist(spawnedStartJumpPlane.transform.position, spawnedEndJumpPlane.transform.position);
-            etcTxt.text = $"measured dist is {dist *100} cm";
-        };
+        //    float dist = CalcDist(spawnedStartJumpPlane.transform.position, spawnedEndJumpPlane.transform.position);
+        //    etcTxt.text = $"measured dist is {dist *100} cm";
+        //};
 
-        controlMap.Prototype.Right_Grip.started += ctx =>
-        {
-            return;
-            SpawnJumpPlane(ref spawnedEndJumpPlane, planePrefabEnd);
+        //controlMap.Prototype.Right_Grip.started += ctx =>
+        //{
+        //    return;
+        //    SpawnJumpPlane(ref spawnedEndJumpPlane, planePrefabEnd);
 
-            if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
-                return;
+        //    if (spawnedStartJumpPlane == null && spawnedEndJumpPlane == null)
+        //        return;
 
-            float dist = CalcDist(spawnedStartJumpPlane.transform.position, spawnedEndJumpPlane.transform.position);
-            etcTxt.text = $"measured dist is {dist * 100} cm";
-        };
+        //    float dist = CalcDist(spawnedStartJumpPlane.transform.position, spawnedEndJumpPlane.transform.position);
+        //    etcTxt.text = $"measured dist is {dist * 100} cm";
+        //};
 
-        //end jump
-        controlMap.Prototype.X.started += ctx => {
-            return;
-            jumpedPos = Vector3.zero;
-            jumpedPos = trackedGameObject.transform.position;
+        ////end jump
+        //controlMap.Prototype.X.started += ctx => {
+        //    return;
+        //    jumpedPos = Vector3.zero;
+        //    jumpedPos = trackedGameObject.transform.position;
 
-            spawnedEndJumpPoint = CheckInstantiatedObject(spawnedEndJumpPoint, pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
+        //    spawnedEndJumpPoint = CheckInstantiatedObject(spawnedEndJumpPoint, pointPrefabEnd, new Vector3(jumpedPos.x, 0, jumpedPos.z), Quaternion.identity);
 
-            float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
+        //    float res = CalcDist(new Vector3(jumpedPos.x, 0, jumpedPos.z), new Vector3(calibratedStartPos.x, 0, calibratedStartPos.z));
 
-            float highestPoint = 0;
-            //float lowestPoint = 0;
-            foreach (var point in moveSamples)
-            {
-                if (point.position.y > highestPoint)
-                    highestPoint = point.position.y;
-            }
+        //    float highestPoint = 0;
+        //    //float lowestPoint = 0;
+        //    foreach (var point in moveSamples)
+        //    {
+        //        if (point.position.y > highestPoint)
+        //            highestPoint = point.position.y;
+        //    }
 
-            jumpTxt.text = $"jumped {res * 100} cm, highest {(highestPoint - calibratedStartPos.y) * 100} cm";
+        //    jumpTxt.text = $"jumped {res * 100} cm, highest {(highestPoint - calibratedStartPos.y) * 100} cm";
 
-            //if still recording, end it
-            if (isRecording)
-                Record(false);
+        //    //if still recording, end it
+        //    if (isRecording)
+        //        Record(false);
 
-            trajectoryRecorder.StopRecording();
-            path.EndRecording();
+        //    trajectoryRecorder.StopRecording();
+        //    path.EndRecording();
 
-            path.DisplayPath();
-            etcTxt.text = "Displaying path";
-        };
+        //    path.DisplayPath();
+        //    etcTxt.text = "Displaying path";
+        //};
 
         #endregion
 
-        //swap tracking
-        //controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
+        ////swap tracking
+        ////controlMap.Prototype.Left_Trigger.started += ctx => SwapTracked();
 
-        //determine start, then start to record
-        controlMap.Prototype.A.started += ctx => StartCoroutine(CalibratePos(result =>
-        {
-            return;
-            ClearTrackingData();
+        ////determine start, then start to record
+        //controlMap.Prototype.A.started += ctx => StartCoroutine(CalibratePos(result =>
+        //{
+        //    return;
+        //    ClearTrackingData();
 
-            calibratedStartPos = result;
-            Debug.Log("Start Pos: " + result);
-            etcTxt.text = "start pos calibrated";
-            lastTrackedPos = result;
+        //    calibratedStartPos = result;
+        //    Debug.Log("Start Pos: " + result);
+        //    etcTxt.text = "start pos calibrated";
+        //    lastTrackedPos = result;
 
-            spawnedStartJumpPoint = CheckInstantiatedObject(spawnedStartJumpPoint, pointPrefabStart, new Vector3(result.x, 0, result.z), Quaternion.identity);
+        //    spawnedStartJumpPoint = CheckInstantiatedObject(spawnedStartJumpPoint, pointPrefabStart, new Vector3(result.x, 0, result.z), Quaternion.identity);
           
-            //add 1st pos
-            MotionPoint point = new MotionPoint
-            {
-                position = result,
-                rotation = trackedGameObject.transform.rotation,
-                timestamp = Time.time,
-                velocity = Vector3.zero
-            };
+        //    //add 1st pos
+        //    MotionPoint point = new MotionPoint
+        //    {
+        //        position = result,
+        //        rotation = trackedGameObject.transform.rotation,
+        //        timestamp = Time.time,
+        //        velocity = Vector3.zero
+        //    };
 
-            moveSamples.Add(point);
-            Record(true);
+        //    moveSamples.Add(point);
+        //    Record(true);
 
-            trajectoryRecorder.StartRecording();
-            path.StartRecording();
+        //    trajectoryRecorder.StartRecording();
+        //    path.StartRecording();
 
-            //basically call the function to record the movement,n/x
-            //so the track can be calc'd after the start point is calibrated
-        }));
+        //    //basically call the function to record the movement,n/x
+        //    //so the track can be calc'd after the start point is calibrated
+        //}));
 
-        //record end pos
-        controlMap.Prototype.Y.started += ctx =>
-        {
-            return;
-            path.DisplayTrailingPath();
-        };
+        ////record end pos
+        //controlMap.Prototype.Y.started += ctx =>
+        //{
+        //    return;
+        //    path.DisplayTrailingPath();
+        //};
 
-        controlMap.Prototype.Left_Grip.started += ctx =>
-        {
-            return;
-            ClearTrackingData();
+        //controlMap.Prototype.Left_Grip.started += ctx =>
+        //{
+        //    return;
+        //    ClearTrackingData();
 
-        };
+        //};
 
 
     }
@@ -244,14 +244,14 @@ public class FitnessTestManager : MonoBehaviour
         {
             isLastHitStart = true;
             //etcTxt.text = $"hits start";
-            CalcScore();
+            //CalcScore();
         }
 
         if (isLastHitStart && Mathf.Abs(CalcDist(currPos, calibratedEndPos)) <= minDist)
         {
             isLastHitStart= false;
             //etcTxt.text = $"hits end";
-            CalcScore();
+            //CalcScore();
         }
         #endregion;
     }
@@ -300,7 +300,7 @@ public class FitnessTestManager : MonoBehaviour
             //this is to enable the rep counting
             isLastHitStart = true;
 
-            InstantiatePoints();
+            //InstantiatePoints();
         }));
     }
 
@@ -344,18 +344,19 @@ public class FitnessTestManager : MonoBehaviour
 
         return sum / pt.Count;
     }
-    private void SpawnJumpPlane(ref GameObject obj, GameObject prefab)
-    {
-        var (pos, rot) = GetPosition();
 
-        if (pos == Vector3.zero)
-        {
-            etcTxt.text = "Floor undetected";
-            return;
-        }
+    //private void SpawnJumpPlane(ref GameObject obj, GameObject prefab)
+    //{
+    //    var (pos, rot) = GetPosition();
 
-        obj = CheckInstantiatedObject(obj, prefab, pos, rot);
-    }
+    //    if (pos == Vector3.zero)
+    //    {
+    //        etcTxt.text = "Floor undetected";
+    //        return;
+    //    }
+
+    //    obj = CheckInstantiatedObject(obj, prefab, pos, rot);
+    //}
 
     private void RecordMovement()
     {
@@ -376,68 +377,68 @@ public class FitnessTestManager : MonoBehaviour
         lastTrackedPos = currentPos;
     }
 
-    private void InstantiatePoints()
-    {
-        int ptCount = 0;
-        //instantiate the points
-        foreach (var point in moveSamples)
-        {
-            GameObject g = null;
-            if (ptCount == 0)
-                g = Instantiate(pointPrefabStart, point.position, point.rotation);
-            else if (ptCount == moveSamples.Count - 1)
-                g = Instantiate(pointPrefabEnd, point.position, point.rotation);
-            else
-                g = Instantiate(pointPrefab, point.position, point.rotation);
+    //private void InstantiatePoints()
+    //{
+    //    int ptCount = 0;
+    //    //instantiate the points
+    //    foreach (var point in moveSamples)
+    //    {
+    //        GameObject g = null;
+    //        if (ptCount == 0)
+    //            g = Instantiate(pointPrefabStart, point.position, point.rotation);
+    //        else if (ptCount == moveSamples.Count - 1)
+    //            g = Instantiate(pointPrefabEnd, point.position, point.rotation);
+    //        else
+    //            g = Instantiate(pointPrefab, point.position, point.rotation);
 
 
-            var relay = g.GetComponent<ColliderEventRelay>();
+    //        var relay = g.GetComponent<ColliderEventRelay>();
 
-            //code what the collider is supposed to do
-            if (relay != null)
-            {
-                relay.OnObjHit += OnPointHit;
+    //        //code what the collider is supposed to do
+    //        if (relay != null)
+    //        {
+    //            relay.OnObjHit += OnPointHit;
 
-                instantiatedObj.Add(g);
-                ptCount++;
-            }
-        }
+    //            instantiatedObj.Add(g);
+    //            ptCount++;
+    //        }
+    //    }
 
-        etcTxt.text = $"spawned {ptCount} balls";
-    }
+    //    etcTxt.text = $"spawned {ptCount} balls";
+    //}
 
     //adds point, disables the point
 
-    private void OnPointHit(GameObject obj, bool isDestroyable)
-    {
-        point++;
+    //private void OnPointHit(GameObject obj, bool isDestroyable)
+    //{
+    //    point++;
 
-        //etcTxt.text = $"point: {point}/{moveSamples.Count}";
+    //    //etcTxt.text = $"point: {point}/{moveSamples.Count}";
 
-        if (!isDestroyable)
-            return;
-        obj.SetActive(false);
-    }
+    //    if (!isDestroyable)
+    //        return;
+    //    obj.SetActive(false);
+    //}
 
-    private void CalcScore()
-    {
-        float ratio = (float)point / instantiatedObj.Count;
+    //private void CalcScore()
+    //{
+    //    float ratio = (float)point / instantiatedObj.Count;
 
-        if (ratio >= fitnessSampledCompletionRate)
-            exerciseCount++;
+    //    if (ratio >= fitnessSampledCompletionRate)
+    //        exerciseCount++;
 
-        //etcTxt.text = $"{instantiatedObj.Count}, {point} / {instantiatedObj.Count}, {ratio} >= {fitnessSampledCompletionRate}, {(ratio >= fitnessSampledCompletionRate ? "add" : "not")}";
-        point = 0;
+    //    //etcTxt.text = $"{instantiatedObj.Count}, {point} / {instantiatedObj.Count}, {ratio} >= {fitnessSampledCompletionRate}, {(ratio >= fitnessSampledCompletionRate ? "add" : "not")}";
+    //    point = 0;
 
-        //reactivate em all
-        foreach (var obj in instantiatedObj)
-        {
-            if (!obj.activeSelf)
-                obj.SetActive(true);
-        }
+    //    //reactivate em all
+    //    foreach (var obj in instantiatedObj)
+    //    {
+    //        if (!obj.activeSelf)
+    //            obj.SetActive(true);
+    //    }
 
-        etcTxt.text = $"did {MathF.Floor(exerciseCount / 2)} reps";
-    }
+    //    etcTxt.text = $"did {MathF.Floor(exerciseCount / 2)} reps";
+    //}
 
     private float CalcDist(Vector3 start, Vector3 end)
     {
@@ -474,24 +475,24 @@ public class FitnessTestManager : MonoBehaviour
     }
 
     //shoot beam out of hands, spawn a plane 
-    private (Vector3, Quaternion) GetPosition()
-    {
-        Ray ray = new Ray(rightArmGameObject.transform.position, rightArmGameObject.transform.forward);
-        //RaycastHit hit;
-        Plane floorPlane = new Plane(Vector3.up, Vector3.zero);
-        float distance;
-        Vector3 hitPoint;
+    //private (Vector3, Quaternion) GetPosition()
+    //{
+    //    Ray ray = new Ray(rightArmGameObject.transform.position, rightArmGameObject.transform.forward);
+    //    //RaycastHit hit;
+    //    Plane floorPlane = new Plane(Vector3.up, Vector3.zero);
+    //    float distance;
+    //    Vector3 hitPoint;
 
-        if (floorPlane.Raycast(ray, out distance))
-        {
-            hitPoint = ray.GetPoint(distance);
-            Vector3 controllerEuler = rightArmGameObject.transform.eulerAngles;
-            Quaternion spawnRot = Quaternion.Euler(0f, controllerEuler.y, 0f);
+    //    if (floorPlane.Raycast(ray, out distance))
+    //    {
+    //        hitPoint = ray.GetPoint(distance);
+    //        Vector3 controllerEuler = rightArmGameObject.transform.eulerAngles;
+    //        Quaternion spawnRot = Quaternion.Euler(0f, controllerEuler.y, 0f);
 
-            return (hitPoint, spawnRot);
-        }
-        return (Vector3.zero, Quaternion.identity);
-    }
+    //        return (hitPoint, spawnRot);
+    //    }
+    //    return (Vector3.zero, Quaternion.identity);
+    //}
 
     public void StartMovement(Action<bool> onComplete)
     {

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -20,6 +21,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private Image settingUISpr;
     [SerializeField] private Button speedUIBtn;
     [SerializeField] private Image speedUISpr;
+    [SerializeField] private Slider playbackSlider;
 
     [Header("Settings UI Variables")]
     [SerializeField] private GameObject settingsRadialGameObj;
@@ -39,13 +41,17 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private TMP_Text sliderInfo;               //gives visual feedback to player on the slider
     [SerializeField] private Button resetBtn;                   //reset current prefabs, make them dissapear completely
     [SerializeField] private TMP_Text fpsText;                  //display fps value
+    
     [Header("Page 2")]
     [SerializeField] private Button hideFloatingHeadBtn;        //hide the replaying statue head
-    [SerializeField] private TMP_Text hideFloatingHeadText;        //hide the replaying statue head
+    [SerializeField] private TMP_Text hideFloatingHeadText;     
     [SerializeField] private Button hideFloatingMenuBtn;        //hide the replay menu
-    [SerializeField] private TMP_Text hideFloatingMenuText;        //hide the replay menu
+    [SerializeField] private TMP_Text hideFloatingMenuText;     
     [SerializeField] private Button hideBtn;                    //disable the head and hand prefab
-    [SerializeField] private TMP_Text hideInfo;                 //tells if its hidden or not
+    [SerializeField] private TMP_Text hideInfo;                 
+    [SerializeField] private Button hideReplayBtn;              //hides the entire replaying system
+    [SerializeField] private TMP_Text hideReplayText;
+    [SerializeField] private bool isHidingReplay = true;           
 
     [Header("Network Related")]
     [SerializeField] private GameObject roomInpGameObj;         //parent for this header
@@ -89,6 +95,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private Button nameCancelBtn;
 
     [Header("Replay List UI")]
+    [SerializeField] private GameObject statueHeadGameObj;
     [SerializeField] private GameObject sortListGameObj;
     [SerializeField] private Button sortListBtn;
     [SerializeField] private TMP_Text sortListText;
@@ -113,17 +120,24 @@ public class FitnessUIManager : MonoBehaviour
 
     private bool isPlaying = false;
     private bool isHidden = true;
+    private bool isMasterControl = false;
     private JumpResult jumpRes;
 
     //recording effect bcs its not apparent enough
     private Coroutine recordingAnimationCoroutine;
     private float simulatedRecordingTime = 0f;
 
+    private bool isUpdatingSliderFromCode = false;
+    private bool isUserDraggingSlider;
+
     public Action<string> OnMovementTypeChanged;
 
     //button color
     private Color32 activeColor = new Color32(118, 118, 118, 255);
     private Color32 defaultColor = Color.white;
+
+    //for master control
+    ControlMap controlMap;
 
     private void Awake()
     {
@@ -140,12 +154,20 @@ public class FitnessUIManager : MonoBehaviour
         m_network = NetworkRecordingManager.Instance;
 
         CheckDisplayType();
-        //endBtn.interactable = false;
         endBtn.gameObject.SetActive(false);
         barInfo.text = "";
         ActivateIcon("");
         sortListText.text = m_replay.isSortByName ? "name" : "time";
-        hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
+        playbackSlider.gameObject.SetActive(false);
+
+        //make sure text is correct
+        hideFloatingHeadText.text = "Show Statue Replay";
+        hideInfo.text = isHidden ? $"Hide Hands" : $"Show Hands";
+        hideFloatingMenuText.text = sortListGameObj.activeSelf ? "Hide Floating Menu" : "Show Floating Menu";
+        //hide replay
+        
+        m_path.SetReplayVisibility(isHidingReplay);
+        hideReplayText.text = isHidingReplay ? "Hide replay" : "Show replay";
 
         //setup ddl
         ddlMotionType.ClearOptions();
@@ -165,6 +187,17 @@ public class FitnessUIManager : MonoBehaviour
         m_network.OnRoomJoined+= CheckRoomState;
         m_network.OnNetworkConnected += CheckNetworkState;
 
+        controlMap = new ControlMap();
+        controlMap.Prototype.Enable();
+
+        isMasterControl = false;
+        MasterControl(isMasterControl);
+        controlMap.Prototype.MasterControl.started += ctx =>
+        {
+            isMasterControl = !isMasterControl;
+            MasterControl(isMasterControl);
+        };
+
         #region Start and Stop recording
 
 
@@ -175,7 +208,7 @@ public class FitnessUIManager : MonoBehaviour
 
             nameInpGameObj.SetActive(false);
             barGameObj.SetActive(true);
-
+            playbackSlider.enabled = false;
             m_fitness.StartMovement(success =>
             {
                 if (success)
@@ -205,42 +238,7 @@ public class FitnessUIManager : MonoBehaviour
         });
 
         endBtn.onClick.AddListener(() => {
-            if (isPlaying)
-            {
-                if (recordingAnimationCoroutine != null)
-                {
-                    StopCoroutine(recordingAnimationCoroutine);
-                    recordingAnimationCoroutine = null;
-                }
-
-                jumpRes = m_fitness.EndMovement();
-                if (!jumpRes.success)
-                    return;
-
-                isPlaying = !isPlaying;
-
-                startBtn.gameObject.SetActive(true);
-                endBtn.gameObject.SetActive(false);
-
-                densitySlider.value = 1;
-
-                m_replay.RefreshReplayList();
-                ActivateIcon("");
-                barInfo.text = $"";
-
-                //resets to 1x speed
-                m_path.speedMult = 1f;
-                fastId = 1; rewindId = 1; slowId = 1;
-                barInfo.text = "Replaying...";
-
-                playBtn.gameObject.SetActive(false);
-                pauseBtn.gameObject.SetActive(true);
-
-                speedUIBtn.gameObject.SetActive(true);
-                settingUIBtn.gameObject.SetActive(true);
-            }
-            m_stats.UpdateMovementType(motType, false);
-            m_stats.ChangeDisplay(motType, true);
+            EndRecord();
         });
 
         #endregion
@@ -320,16 +318,17 @@ public class FitnessUIManager : MonoBehaviour
         hideBtn.onClick.AddListener(() =>
         {
             isHidden = !isHidden;
-            m_path.PlaybackMeshObjSetActive(isHidden);
-            hideInfo.text = isHidden ? $"cubes enabled" : $"cubes disabled";
+            m_path.SetHandsVisibility(isHidden);
+            hideInfo.text = isHidden ? $"Hide Hands" : $"Show Hands";
         });
 
-        changeDisplayBtn.onClick.AddListener(()=> { m_path.DisplayTrailingPath();
+        changeDisplayBtn.onClick.AddListener(()=> { m_path.DisplayTrailingPath(1);
             CheckDisplayType();
         });
 
         resetBtn.onClick.AddListener(()=> { 
             m_fitness.ClearTrackingData();
+            playbackSlider.gameObject.SetActive(false);
             barInfo.text = $"";
         });
         #endregion
@@ -337,12 +336,25 @@ public class FitnessUIManager : MonoBehaviour
         #region settings button page 2
         hideFloatingHeadBtn.onClick.AddListener(() => { 
             bool _b = PlayerReplayBox.instance.DisableMesh();
-            hideFloatingHeadText.text = _b ? "Disable Floating Menu" : "Enable Floating Menu";
+            statueHeadGameObj.SetActive(_b);
+
+            hideFloatingHeadText.text = _b ? "Hide Statue Replay" : "Show Statue Replay";
         });
 
         hideFloatingMenuBtn.onClick.AddListener(() => { 
             sortListGameObj.SetActive(!sortListGameObj.activeSelf);
-            hideFloatingMenuText.text = sortListGameObj.activeSelf ? "Disable Statue Replay" : "Enable Statue Replay";
+            hideFloatingMenuText.text = sortListGameObj.activeSelf ? "Hide Floating Menu" : "Show Floating Menu";
+        });
+
+        hideReplayBtn.onClick.AddListener(() =>
+        {
+            isHidingReplay = !isHidingReplay;
+            m_path.SetReplayVisibility(isHidingReplay);
+            hideReplayText.text = isHidingReplay ? "Hide replay" : "Show replay";
+
+            if(m_path.hmdMotionPoints.Count > 0)
+                playbackSlider.gameObject.SetActive(isHidingReplay);
+
         });
 
         roomJoimBtn.onClick.AddListener(() => { 
@@ -426,7 +438,31 @@ public class FitnessUIManager : MonoBehaviour
 
         #endregion
 
-        #region playback buttons bar setup
+        #region slider setup
+        playbackSlider.onValueChanged.AddListener(delegate
+        {
+            if (!isUpdatingSliderFromCode)
+            {
+                m_path.ScrubToTimePercentage(playbackSlider.value);
+            }
+        });
+
+        EventTrigger trigger = playbackSlider.gameObject.GetComponent<EventTrigger>();
+        if (trigger == null) trigger = playbackSlider.gameObject.AddComponent<EventTrigger>();
+
+        EventTrigger.Entry pointerDownEntry = new EventTrigger.Entry();
+        pointerDownEntry.eventID = EventTriggerType.PointerDown;
+        pointerDownEntry.callback.AddListener((data) => { isUserDraggingSlider = true; });
+        trigger.triggers.Add(pointerDownEntry);
+
+        EventTrigger.Entry pointerUpEntry = new EventTrigger.Entry();
+        pointerUpEntry.eventID = EventTriggerType.PointerUp;
+        pointerUpEntry.callback.AddListener((data) => { isUserDraggingSlider = false; });
+        trigger.triggers.Add(pointerUpEntry);
+
+        #endregion
+
+        #region playback buttons and slider setup
         playBtn.onClick.AddListener(() => {
             playBtn.gameObject.SetActive(false);
             pauseBtn.gameObject.SetActive(true);
@@ -527,7 +563,6 @@ public class FitnessUIManager : MonoBehaviour
         });
         #endregion
 
-
         #region sorting list button setup
         sortListBtn.onClick.AddListener(() => {
             m_replay.isSortByName = !m_replay.isSortByName;
@@ -543,6 +578,59 @@ public class FitnessUIManager : MonoBehaviour
 
         float fps = 1.0f / Time.unscaledDeltaTime;
         fpsText.text = $"FPS: {Mathf.Ceil(fps)}";
+
+        if (!isUpdatingSliderFromCode && !isUserDraggingSlider)
+        {
+            isUpdatingSliderFromCode = true;
+            playbackSlider.value = m_path.currentPlaybackTimeRaw;
+            isUpdatingSliderFromCode = false;
+        }
+    }
+
+    //the code originally just inputted to EndRecord is moved here because needs to be called by PC
+    public void EndRecord()
+    {
+        if (isPlaying)
+        {
+            if (recordingAnimationCoroutine != null)
+            {
+                StopCoroutine(recordingAnimationCoroutine);
+                recordingAnimationCoroutine = null;
+            }
+
+            jumpRes = m_fitness.EndMovement();
+            if (!jumpRes.success)
+                return;
+
+            isPlaying = !isPlaying;
+
+            startBtn.gameObject.SetActive(true);
+            endBtn.gameObject.SetActive(false);
+
+            densitySlider.value = 1;
+
+            m_replay.RefreshReplayList();
+            ActivateIcon("");
+            barInfo.text = $"";
+
+            //resets to 1x speed
+            m_path.speedMult = 1f;
+            fastId = 1; rewindId = 1; slowId = 1;
+            barInfo.text = isHidingReplay ? "Replaying..." : "Finished !";
+
+            playbackSlider.enabled = true;
+
+            playBtn.gameObject.SetActive(false);
+            pauseBtn.gameObject.SetActive(true);
+
+            speedUIBtn.gameObject.SetActive(true);
+            settingUIBtn.gameObject.SetActive(true);
+        }
+        m_stats.UpdateMovementType(motType, false);
+        m_stats.ChangeDisplay(motType, true);
+
+        if (m_path.hmdMotionPoints.Count > 0)
+            playbackSlider.gameObject.SetActive(isHidingReplay);
     }
 
     private void CheckDisplayType()
@@ -642,5 +730,12 @@ public class FitnessUIManager : MonoBehaviour
         {
             radialPageInfo.text = $" {currSettingsIndex + 1} / {radialBgArray.Length}";
         }
+    }
+
+    private void MasterControl(bool _b)
+    {
+        hideFloatingHeadBtn.gameObject.SetActive(_b);
+        hideFloatingMenuBtn.gameObject.SetActive(_b);
+        hideReplayBtn.gameObject.SetActive(_b);
     }
 }
