@@ -18,8 +18,13 @@ public class DataReplayer : MonoBehaviour
     [Header("UI 控件")]
     public TextMeshProUGUI fileNameText;
     public TextMeshProUGUI motionLabelText;
+    public TextMeshProUGUI playSpeedText;
     public Button loadButton;
     public Button playPauseButton;
+    public GameObject playIcon, pauseIcon;
+    public Button rewindButton;
+    public Button slowButton;
+    public Button fastButton;
     public Slider timelineSlider;
     public TextMeshProUGUI timeDisplay;
 
@@ -29,6 +34,7 @@ public class DataReplayer : MonoBehaviour
     public Toggle lcToggle;
     public Toggle rhToggle;
     public Toggle lhToggle;
+    public Toggle allhandToggle;
 
     [Header("視覺化特效 (軌跡與面向)")]
     public Button modeToggleButton; // 👇 新增：用來切換 Show All / Trailing 的按鈕
@@ -50,7 +56,7 @@ public class DataReplayer : MonoBehaviour
     // 👇 新增這行來控制面向物件的初始旋轉補償
     [Tooltip("面向物件的基礎旋轉偏移量 (修正建模與Unity的軸向差異)")]
     public Vector3 orientationRotationOffset = new Vector3(-90f, 0f, 0f);
-    
+
     [Header("影片同步對照")]
     public VideoPlayer videoPlayer;      // 👇 綁定 Unity 的 VideoPlayer
     public TMP_InputField syncDelayInput;    // 👇 讓使用者輸入延遲秒數的 UI (例如輸入 0.15)
@@ -61,6 +67,10 @@ public class DataReplayer : MonoBehaviour
     private bool isPlaying = false;
     private float currentTime = 0f;
     private float maxTime = 0f;
+    private float speedMult = 1f;
+    private int fastID = -1;
+    private int slowID = -1;
+    private int rewindId = -1;
 
     // --- 快取陣列 (提升效能用) ---
     private Vector3[] hmdPos, rcPos, lcPos, rhPos, lhPos;
@@ -78,13 +88,70 @@ public class DataReplayer : MonoBehaviour
     {
         // 綁定檔案讀取與播放事件
         loadButton.onClick.AddListener(SelectAndLoadFile);
-        playPauseButton.onClick.AddListener(() => {
+
+        float[] slowSpeeds = { 0.75f, 0.5f, 0.25f };
+        float[] fastSpeeds = { 1.5f, 2f, 3f };
+        float[] rewindSpeeds = { -1f, -1.5f, -2f, -3f };
+
+        playPauseButton.onClick.AddListener(() =>
+        {
             isPlaying = !isPlaying;
             if (!isPlaying && videoPlayer != null)
             {
                 videoPlayer.Pause();
+                playIcon.SetActive(true);
+                pauseIcon.SetActive(false);
+                UpdateSpeedDisplay();
+            }
+            else
+            {
+                // 恢復正常播放時，速度回到 1 倍，並重置所有切檔 ID
+                speedMult = 1f;
+                slowID = -1;
+                fastID = -1;
+                rewindId = -1;
+                UpdateSpeedDisplay();
+                playIcon.SetActive(false);
+                pauseIcon.SetActive(true);
             }
         });
+        rewindButton.onClick.AddListener(() =>
+        {
+            rewindId = (rewindId + 1) % rewindSpeeds.Length; // 0, 1, 2, 3 循環
+            speedMult = rewindSpeeds[rewindId];
+
+            // 重置其他狀態
+            slowID = -1;
+            fastID = -1;
+            UpdateSpeedDisplay();
+
+            if (!isPlaying) isPlaying = true;
+        });
+        slowButton.onClick.AddListener(() =>
+        {
+            slowID = (slowID + 1) % slowSpeeds.Length; // 0, 1, 2 循環
+            speedMult = slowSpeeds[slowID];
+
+            // 重置其他狀態
+            fastID = -1;
+            rewindId = -1;
+            UpdateSpeedDisplay();
+
+            if (!isPlaying) isPlaying = true;
+        });
+        fastButton.onClick.AddListener(() =>
+        {
+            fastID = (fastID + 1) % fastSpeeds.Length; // 0, 1, 2 循環
+            speedMult = fastSpeeds[fastID];
+
+            // 重置其他狀態
+            slowID = -1;
+            rewindId = -1;
+            UpdateSpeedDisplay();
+
+            if (!isPlaying) isPlaying = true;
+        });
+        UpdateSpeedDisplay();
 
         // 處理 Slider 拖拉 (Scrubbing)
         timelineSlider.onValueChanged.AddListener(OnTimelineScrub);
@@ -95,6 +162,11 @@ public class DataReplayer : MonoBehaviour
         if (lcToggle) lcToggle.onValueChanged.AddListener(isOn => lcObj.SetActive(isOn));
         if (rhToggle) rhToggle.onValueChanged.AddListener(isOn => rhObj.SetActive(isOn));
         if (lhToggle) lhToggle.onValueChanged.AddListener(isOn => lhObj.SetActive(isOn));
+        if (allhandToggle) allhandToggle.onValueChanged.AddListener(isOn =>
+        {
+            rhObj.SetActive(isOn);
+            lhObj.SetActive(isOn);
+        });
 
         // 綁定物件與軌跡線的顯示隱藏
         SetupToggle(hmdToggle, hmdObj, hmdLine);
@@ -112,7 +184,8 @@ public class DataReplayer : MonoBehaviour
         if (syncDelayInput != null)
         {
             syncDelayInput.text = syncDelay.ToString("F3");
-            syncDelayInput.onValueChanged.AddListener(val => {
+            syncDelayInput.onValueChanged.AddListener(val =>
+            {
                 if (float.TryParse(val, out float res))
                 {
                     syncDelay = res;
@@ -138,47 +211,54 @@ public class DataReplayer : MonoBehaviour
     {
         string fileName = Path.GetFileNameWithoutExtension(selectedPath);
         string currentDir = Path.GetDirectoryName(selectedPath);
-        
+
         // 取得上一層資料夾 (也就是你的 "A資料夾")
-        DirectoryInfo parentDirInfo = Directory.GetParent(currentDir);
-        
-        if (parentDirInfo == null) 
+        try
         {
-            Debug.LogWarning("無法解析上一層資料夾！");
-            return;
+            DirectoryInfo parentDirInfo = Directory.GetParent(currentDir);
+            if (parentDirInfo == null)
+            {
+                Debug.LogWarning("無法解析上一層資料夾！");
+                return;
+            }
+
+            string rootDir = parentDirInfo.FullName;
+
+            // 在 A 資料夾底下全域搜尋同名的 .json 與 .mp4
+            string[] jsonFiles = Directory.GetFiles(rootDir, fileName + ".json", SearchOption.AllDirectories);
+            string[] mp4Files = Directory.GetFiles(rootDir, fileName + ".mp4", SearchOption.AllDirectories);
+
+            string jsonPath = jsonFiles.Length > 0 ? jsonFiles[0] : null;
+            string mp4Path = mp4Files.Length > 0 ? mp4Files[0] : null;
+
+            // 將 InputField 顯示為當前載入的檔名 (比較乾淨)
+            fileNameText.text = fileName;
+
+            // 分別執行讀取
+            if (!string.IsNullOrEmpty(jsonPath))
+            {
+                Debug.Log("載入 JSON: " + jsonPath);
+                LoadJson(jsonPath);
+            }
+            else
+            {
+                Debug.LogWarning("找不到對應的 JSON 檔案！");
+            }
+
+            if (!string.IsNullOrEmpty(mp4Path))
+            {
+                Debug.Log("載入 MP4: " + mp4Path);
+                LoadVideo(mp4Path);
+            }
+            else
+            {
+                Debug.LogWarning("找不到對應的 MP4 檔案！");
+            }
         }
-
-        string rootDir = parentDirInfo.FullName;
-
-        // 在 A 資料夾底下全域搜尋同名的 .json 與 .mp4
-        string[] jsonFiles = Directory.GetFiles(rootDir, fileName + ".json", SearchOption.AllDirectories);
-        string[] mp4Files = Directory.GetFiles(rootDir, fileName + ".mp4", SearchOption.AllDirectories);
-
-        string jsonPath = jsonFiles.Length > 0 ? jsonFiles[0] : null;
-        string mp4Path = mp4Files.Length > 0 ? mp4Files[0] : null;
-
-        // 將 InputField 顯示為當前載入的檔名 (比較乾淨)
-        fileNameText.text = fileName;
-
-        // 分別執行讀取
-        if (!string.IsNullOrEmpty(jsonPath))
+        catch
         {
-            Debug.Log("載入 JSON: " + jsonPath);
-            LoadJson(jsonPath);
-        }
-        else
-        {
-            Debug.LogWarning("找不到對應的 JSON 檔案！");
-        }
-
-        if (!string.IsNullOrEmpty(mp4Path))
-        {
-            Debug.Log("載入 MP4: " + mp4Path);
-            LoadVideo(mp4Path);
-        }
-        else
-        {
-            Debug.LogWarning("找不到對應的 MP4 檔案！");
+            LoadJson(selectedPath);
+            fileNameText.text = fileName;
         }
     }
 
@@ -195,12 +275,14 @@ public class DataReplayer : MonoBehaviour
             timelineSlider.maxValue = maxTime;
             timelineSlider.value = 0f;
             currentTime = 0f;
-            isPlaying = false;
+            isPlaying = true;
 
             CacheMotionData();
             UpdateFrame(currentTime);
             UpdateTrailLines();
             SyncVideoTime();
+
+            UpdateSpeedDisplay();
         }
     }
     private void LoadVideo(string path)
@@ -210,9 +292,9 @@ public class DataReplayer : MonoBehaviour
             // Unity 的 VideoPlayer 可以直接吃本機絕對路徑 (Url)
             videoPlayer.source = VideoSource.Url;
             videoPlayer.url = path;
-            
+
             // 呼叫 Prepare 讓影片在背景預先載入，避免播放瞬間卡頓
-            videoPlayer.Prepare(); 
+            videoPlayer.Prepare();
         }
     }
 
@@ -237,10 +319,14 @@ public class DataReplayer : MonoBehaviour
     {
         if (isPlaying && motionData != null)
         {
-            currentTime += Time.deltaTime;
+            currentTime += Time.deltaTime * speedMult;
             if (currentTime >= maxTime)
             {
                 currentTime = 0;
+            }
+            else if (currentTime < 0)
+            {
+                currentTime = maxTime; // 倒播到底時，回到影片結尾繼續倒播
             }
 
             // 使用 SetValueWithoutNotify 避免觸發 Slider 的 onValueChanged 產生無窮迴圈
@@ -260,12 +346,21 @@ public class DataReplayer : MonoBehaviour
                 }
                 else
                 {
-                    // 確保影片處於播放狀態
-                    if (!videoPlayer.isPlaying) videoPlayer.Play();
-
-                    // Unity VideoPlayer 播放時會有微小的時間漂移，超過 0.05 秒強制校正
-                    if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.05f)
+                    // 👇 區分正播與倒播的處理邏輯
+                    if (speedMult > 0)
                     {
+                        // 正播：開啟 VideoPlayer 播放，處理時間漂移校正
+                        if (!videoPlayer.isPlaying) videoPlayer.Play();
+
+                        if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.05f)
+                        {
+                            videoPlayer.time = expectedVideoTime;
+                        }
+                    }
+                    else
+                    {
+                        // 倒播：暫停 VideoPlayer，全權由程式覆寫時間以達到流暢倒轉
+                        if (videoPlayer.isPlaying) videoPlayer.Pause();
                         videoPlayer.time = expectedVideoTime;
                     }
                 }
@@ -295,7 +390,7 @@ public class DataReplayer : MonoBehaviour
         {
             expectedVideoTime = 0f; // 影片尚未開始
         }
-        
+
         videoPlayer.time = expectedVideoTime;
     }
 
@@ -348,7 +443,7 @@ public class DataReplayer : MonoBehaviour
         }
         else
         {
-            int trailLengthFrames = Mathf.RoundToInt(trailLengthSlider.value * totalFrames);
+            int trailLengthFrames = Mathf.RoundToInt(trailLengthSlider.value * 20);
             trailStartIndex = Mathf.Max(0, currentFrameIndex - trailLengthFrames);
             pointCount = currentFrameIndex - trailStartIndex + 1; // 畫到當前時間格
         }
@@ -430,6 +525,24 @@ public class DataReplayer : MonoBehaviour
                 UpdateTrailLines(); // 切換時刷新軌跡
             });
         }
+    }
+    private void UpdateSpeedDisplay()
+    {
+        if (playSpeedText == null) return;
+
+        if (!isPlaying)
+        {
+            playSpeedText.text = "pause";
+            return;
+        }
+
+        // 判斷正播還是倒播 (如果 speedMult 大於 0 就是正播，小於 0 就是倒播)
+        string direction = (speedMult >= 0) ? ">> " : "<< ";
+
+        // 取絕對值，讓倒播 -1.5 顯示為 1.5x
+        float displaySpeed = Mathf.Abs(speedMult);
+
+        playSpeedText.text = $"{direction} x {displaySpeed}";
     }
     private void ToggleDisplayMode()
     {
