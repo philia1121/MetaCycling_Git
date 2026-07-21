@@ -2992,7 +2992,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &126330242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6434,12 +6434,14 @@ MonoBehaviour:
   ddlMotionType: {fileID: 1291082883}
   ddlContent: {fileID: 840426402}
   motionSelection:
+  - jump rope
+  - row machine
+  - dumbell
+  - cycllng
   - vertical jump
   - long jump
-  - jump rope
   - speed walking
   - walking
-  - row machine
   - others
   nameInp: {fileID: 1214318380}
   nameStartBtn: {fileID: 304972632}

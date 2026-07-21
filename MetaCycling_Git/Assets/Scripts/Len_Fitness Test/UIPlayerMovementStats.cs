@@ -66,6 +66,8 @@ public class UIPlayerMovementStats : MonoBehaviour
             case "others":
                 HandleWalking(true, _printInfo);
                 break;
+            default :
+                break;
         }
     }
 
