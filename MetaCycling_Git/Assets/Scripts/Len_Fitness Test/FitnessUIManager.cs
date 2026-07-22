@@ -190,6 +190,7 @@ public class FitnessUIManager : MonoBehaviour
         controlMap = new ControlMap();
         controlMap.Prototype.Enable();
 
+        //controller button binding
         isMasterControl = false;
         MasterControl(isMasterControl);
         controlMap.Prototype.MasterControl.started += ctx =>
@@ -198,43 +199,23 @@ public class FitnessUIManager : MonoBehaviour
             MasterControl(isMasterControl);
         };
 
+        controlMap.Prototype.Record.started += ctx =>
+        {
+            if (string.IsNullOrEmpty(nameInp.text))
+                return;
+
+                if (!isPlaying)
+                StartRecord();
+            else if (isPlaying)
+                EndRecord();
+        };
+
         #region Start and Stop recording
 
 
         nameStartBtn.onClick.AddListener(() =>
         {
-            string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
-            m_recorder.ChangeUserName(nameToSave);
-
-            nameInpGameObj.SetActive(false);
-            barGameObj.SetActive(true);
-            playbackSlider.enabled = false;
-            m_fitness.StartMovement(success =>
-            {
-                if (success)
-                {
-                    isPlaying = true;
-
-                    startBtn.gameObject.SetActive(false);
-                    endBtn.gameObject.SetActive(true);
-
-                    speedUIBtn.gameObject.SetActive(false);
-                    settingUIBtn.gameObject.SetActive(false);
-
-                    ActivateIcon(recordingIcon.name);
-
-                    //barInfo.text = "Recording"; GIVE RECORDING EFFECT
-                    m_stats.ClearDisplay();
-
-                    if (recordingAnimationCoroutine != null) StopCoroutine(recordingAnimationCoroutine);
-                    recordingAnimationCoroutine = StartCoroutine(RecordingAnimationRoutine());
-
-                    m_stats.UpdateMovementType(motType, true);
-                }
-            });
-
-            if (UnityEngine.EventSystems.EventSystem.current != null)
-                UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            StartRecord();
         });
 
         endBtn.onClick.AddListener(() => {
@@ -585,6 +566,42 @@ public class FitnessUIManager : MonoBehaviour
             playbackSlider.value = m_path.currentPlaybackTimeRaw;
             isUpdatingSliderFromCode = false;
         }
+    }
+
+    public void StartRecord()
+    {
+        string nameToSave = string.IsNullOrEmpty(nameInp.text) ? "Guest" : nameInp.text;
+        m_recorder.ChangeUserName(nameToSave);
+
+        nameInpGameObj.SetActive(false);
+        barGameObj.SetActive(true);
+        playbackSlider.enabled = false;
+        m_fitness.StartMovement(success =>
+        {
+            if (success)
+            {
+                isPlaying = true;
+
+                startBtn.gameObject.SetActive(false);
+                endBtn.gameObject.SetActive(true);
+
+                speedUIBtn.gameObject.SetActive(false);
+                settingUIBtn.gameObject.SetActive(false);
+
+                ActivateIcon(recordingIcon.name);
+
+                //barInfo.text = "Recording"; GIVE RECORDING EFFECT
+                m_stats.ClearDisplay();
+
+                if (recordingAnimationCoroutine != null) StopCoroutine(recordingAnimationCoroutine);
+                recordingAnimationCoroutine = StartCoroutine(RecordingAnimationRoutine());
+
+                m_stats.UpdateMovementType(motType, true);
+            }
+        });
+
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
     }
 
     //the code originally just inputted to EndRecord is moved here because needs to be called by PC

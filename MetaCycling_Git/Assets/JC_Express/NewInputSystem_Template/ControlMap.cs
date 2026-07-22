@@ -970,7 +970,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""modifier"",
                     ""id"": ""12d8fc7d-a2af-4463-b3a4-09b580811f84"",
-                    ""path"": ""<XRController>{LeftHand}/{GripButton}"",
+                    ""path"": ""<XRController>{RightHand}/{PrimaryButton}"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -981,7 +981,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                 {
                     ""name"": ""binding"",
                     ""id"": ""cffa4cbd-3649-42a8-b338-bc6097e7e492"",
-                    ""path"": ""<XRController>{LeftHand}/{PrimaryButton}"",
+                    ""path"": ""<XRController>{RightHand}/{SecondaryButton}"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
