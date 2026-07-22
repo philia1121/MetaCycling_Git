@@ -48,6 +48,11 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject playerFab;
     [SerializeField] private GameObject observer;
 
+    [Header("Auto Reconnect Settings")]
+    [SerializeField] private float reconnectRetryDelay = .5f;      // try to connect, false, retry after n seconds
+    private Coroutine reconnectRoutine;
+    private bool isIntentionalDisconnect = false;                   //flagging intentional disconnect
+
     public static NetworkRecordingManager Instance;
 
     public Action<bool> OnNetworkConnected;
@@ -56,6 +61,8 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     private bool isPlatformSetup = false;
     private WebCamTexture activeWebCamTexture;
     private string webcamName;
+
+
 
     private GameObject spawnedLocalVRPlayer;
     private Button activeJoinButtonRef; // button that was disabled during joining
@@ -87,6 +94,22 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
                 Debug.LogWarning("[PC Host] Spacebar pressed. Requesting VR stream termination...");
                 photonView.RPC("RPC_ForceClientStopRecording", RpcTarget.Others);
                 RPC_StopWebcamRecordingStream();
+            }
+        }
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (!pauseStatus) 
+        {
+            Debug.LogWarning("[VR Resume] Headset woke up from sleep mode. Checking connection state...");
+
+            if (!PhotonNetwork.IsConnectedAndReady)
+            {
+                if (reconnectRoutine != null)
+                    StopCoroutine(reconnectRoutine);
+
+                reconnectRoutine = StartCoroutine(AttemptReconnectLoop());
             }
         }
     }
@@ -217,8 +240,11 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 
     public void RequestLeaveRoom()
     {
-        if (PhotonNetwork.InRoom) 
+        if (PhotonNetwork.InRoom)
+        {
+            isIntentionalDisconnect = true; 
             PhotonNetwork.LeaveRoom();
+        }
     }
 
     #endregion
@@ -267,6 +293,7 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     #region photon or networking related
     public void CreateRoomBtnClick(TMP_InputField _inp)
     {
+        isIntentionalDisconnect = false;
         string rname = _inp.text;
         if (string.IsNullOrEmpty(rname))
         {
@@ -283,6 +310,7 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 
     public void JoinRoomBtnClick(TMP_InputField _inp, Button _btn)
     {
+        isIntentionalDisconnect = false;
         string rname = _inp.text;
 
         if (string.IsNullOrEmpty(rname))
@@ -310,6 +338,23 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 
         PhotonNetwork.JoinRoom(rname);
     }
+
+    private IEnumerator AttemptReconnectLoop()
+    {
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        while (!PhotonNetwork.IsConnectedAndReady)
+        {
+            if (infoText != null)
+                infoText.text = "<color=\"yellow\">Reconnecting to Photon Master Server...</color>";
+
+            PhotonNetwork.ConnectUsingSettings();
+            yield return new WaitForSeconds(reconnectRetryDelay);
+        }
+
+        reconnectRoutine = null;
+    }
+
     private void CloseRoomBtnClick()
     {
         if (PhotonNetwork.InRoom)
@@ -317,6 +362,7 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN
             if (WebcamToMP4.instance != null) WebcamToMP4.instance.StopRecording();
 #endif
+            isIntentionalDisconnect = true;
             PhotonNetwork.LeaveRoom();
         }
     }
@@ -399,6 +445,14 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
+        isIntentionalDisconnect = false;
+
+        if (reconnectRoutine != null)
+        {
+            StopCoroutine(reconnectRoutine);
+            reconnectRoutine = null;
+        }
+
         infoText.text = $"Connected !";
         
         isPlatformSetup = false;
@@ -410,6 +464,18 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     {
         OnNetworkConnected?.Invoke(false);
         OnRoomJoined?.Invoke(false);
+
+        if (!isIntentionalDisconnect)
+        {
+            if (reconnectRoutine != null)
+                StopCoroutine(reconnectRoutine);
+
+            reconnectRoutine = StartCoroutine(AttemptReconnectLoop());
+        }
+        else
+        {
+            isIntentionalDisconnect = false; 
+        }
     }
 
     public override void OnCreatedRoom()
@@ -419,6 +485,7 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     }
     public override void OnJoinedRoom()
     {
+        OnNetworkConnected?.Invoke(true);
         Debug.Log($" joined to {PhotonNetwork.CurrentRoom.Name}");
 
         if (activeJoinButtonRef != null)
