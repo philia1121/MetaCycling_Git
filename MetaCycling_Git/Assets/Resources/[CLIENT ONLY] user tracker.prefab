@@ -421,7 +421,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 3
+  m_Time: 2.5
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -487,7 +487,7 @@ TrailRenderer:
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
-  m_MinVertexDistance: 0.05
+  m_MinVertexDistance: 0.015
   m_MaskInteraction: 0
   m_Autodestruct: 0
   m_Emitting: 1
@@ -808,7 +808,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 3
+  m_Time: 2.5
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -874,7 +874,7 @@ TrailRenderer:
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
-  m_MinVertexDistance: 0.05
+  m_MinVertexDistance: 0.015
   m_MaskInteraction: 0
   m_Autodestruct: 0
   m_Emitting: 1
@@ -1124,7 +1124,7 @@ TrailRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Time: 3
+  m_Time: 2.5
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
@@ -1190,7 +1190,7 @@ TrailRenderer:
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
-  m_MinVertexDistance: 0.05
+  m_MinVertexDistance: 0.015
   m_MaskInteraction: 0
   m_Autodestruct: 0
   m_Emitting: 1

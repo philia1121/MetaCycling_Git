@@ -26,6 +26,12 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     [SerializeField] private Button closeRoomBtn;
     [SerializeField] private GameObject alertPanel;
     [SerializeField] private TMP_Text clientInfo;
+    [Header("Webcam Extra Item")]
+    [SerializeField] private RectTransform PopupPanel;     //this is the mini webcam panel
+    [SerializeField] private Button PopupOutBtn;
+    [SerializeField] private Button PopupInBtn;
+    [SerializeField] private float PopupOutXPos;
+    [SerializeField] private float PopupInXPos;
 
     [Header("Join Room Panel Items")]
     [SerializeField] private GameObject joinRoomPanelObj;
@@ -201,6 +207,27 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
                 }
             });
 
+            Vector3 _tmp = PopupPanel.anchoredPosition;
+            PopupPanel.anchoredPosition = new Vector3(PopupInXPos, _tmp.y, _tmp.z);
+            PopupOutBtn.gameObject.SetActive(true);
+            PopupInBtn.gameObject.SetActive(false);
+
+            PopupOutBtn.onClick.RemoveAllListeners();
+            PopupOutBtn.onClick.AddListener(() => {
+                Vector3 _tmp = PopupPanel.anchoredPosition;
+                PopupPanel.anchoredPosition = new Vector3 (PopupOutXPos, _tmp.y, _tmp.z);
+                PopupOutBtn.gameObject.SetActive(false);
+                PopupInBtn.gameObject.SetActive(true);
+            });
+
+            PopupInBtn.onClick.RemoveAllListeners();
+            PopupInBtn.onClick.AddListener(() => {
+                Vector3 _tmp = PopupPanel.anchoredPosition;
+                PopupPanel.anchoredPosition = new Vector3(PopupInXPos, _tmp.y, _tmp.z);
+                PopupOutBtn.gameObject.SetActive(true);
+                PopupInBtn.gameObject.SetActive(false);
+            });
+
             closeRoomBtn.onClick.RemoveAllListeners();
             closeRoomBtn.onClick.AddListener(CloseRoomBtnClick);
 
@@ -222,6 +249,8 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
             {
                 infoText.text = "<color=\"red\">No video capture devices found.</color>";
             }
+
+
         }
 
         requestRecordingPanel.SetActive(requestRecordingPanel.name == _name);

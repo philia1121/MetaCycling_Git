@@ -12,7 +12,6 @@ public class BaseTrackingMng : MonoBehaviour
     OVRInput.Controller lh = OVRInput.Controller.LHand;
     OVRInput.Controller[] allController = new OVRInput.Controller[4];
 
-    private Vector3 userPos;
     void Awake()
     {
         allTransform[0] = L_Cont;
