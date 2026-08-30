@@ -6,6 +6,7 @@ using UnityEngine.Video;
 using System.IO;
 using SFB;
 using TMPro;
+using UnityEngine.EventSystems;
 public class DataReplayer : MonoBehaviour
 {
     [Header("Game Objects")]
@@ -60,7 +61,11 @@ public class DataReplayer : MonoBehaviour
     [Header("影片同步對照")]
     public VideoPlayer videoPlayer;      // 👇 綁定 Unity 的 VideoPlayer
     public TMP_InputField syncDelayInput;    // 👇 讓使用者輸入延遲秒數的 UI (例如輸入 0.15)
-    private float syncDelay = 0.15f;     // 預設影片比 JSON 慢 0.15 秒
+    public float syncDelay = 0.15f;     // 預設影片比 JSON 慢 0.15 秒
+
+    [Header("Video Cover")]
+    public GameObject notSupportSign;
+    public GameObject hitAgainSign;
 
 
     private StorageRecordData motionData;
@@ -89,9 +94,9 @@ public class DataReplayer : MonoBehaviour
         // 綁定檔案讀取與播放事件
         loadButton.onClick.AddListener(SelectAndLoadFile);
 
-        float[] slowSpeeds = { 0.75f, 0.5f, 0.25f };
-        float[] fastSpeeds = { 1.5f, 2f, 3f };
-        float[] rewindSpeeds = { -1f, -1.5f, -2f, -3f };
+        float[] slowSpeeds = { 0.75f, 0.5f, 0.25f, 1 };
+        float[] fastSpeeds = { 1.5f, 2f, 3f, 1 };
+        float[] rewindSpeeds = { -1f, -1.5f, -2f, -3f, 1 };
 
         playPauseButton.onClick.AddListener(() =>
         {
@@ -114,6 +119,8 @@ public class DataReplayer : MonoBehaviour
                 playIcon.SetActive(false);
                 pauseIcon.SetActive(true);
             }
+
+            hitAgainSign.SetActive(false);
         });
         rewindButton.onClick.AddListener(() =>
         {
@@ -155,6 +162,9 @@ public class DataReplayer : MonoBehaviour
 
         // 處理 Slider 拖拉 (Scrubbing)
         timelineSlider.onValueChanged.AddListener(OnTimelineScrub);
+        {
+
+        }
 
         // 綁定物件的顯示與隱藏
         if (hmdToggle) hmdToggle.onValueChanged.AddListener(isOn => hmdObj.SetActive(isOn));
@@ -186,6 +196,7 @@ public class DataReplayer : MonoBehaviour
             syncDelayInput.text = syncDelay.ToString("F3");
             syncDelayInput.onValueChanged.AddListener(val =>
             {
+                hitAgainSign.SetActive(true);
                 if (float.TryParse(val, out float res))
                 {
                     syncDelay = res;
@@ -351,8 +362,9 @@ public class DataReplayer : MonoBehaviour
                     {
                         // 正播：開啟 VideoPlayer 播放，處理時間漂移校正
                         if (!videoPlayer.isPlaying) videoPlayer.Play();
+                        videoPlayer.playbackSpeed = speedMult;
 
-                        if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.05f)
+                        if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.1f)
                         {
                             videoPlayer.time = expectedVideoTime;
                         }
@@ -360,8 +372,9 @@ public class DataReplayer : MonoBehaviour
                     else
                     {
                         // 倒播：暫停 VideoPlayer，全權由程式覆寫時間以達到流暢倒轉
-                        if (videoPlayer.isPlaying) videoPlayer.Pause();
+                        // if (videoPlayer.isPlaying) videoPlayer.Pause();
                         videoPlayer.time = expectedVideoTime;
+                        Debug.Log("Force Reverse");
                     }
                 }
             }
@@ -375,8 +388,9 @@ public class DataReplayer : MonoBehaviour
         if (motionData == null) return;
 
         currentTime = value;
+        // SyncVideoTime(); // 拖拉時強制影片跳躍到對應影格
+        hitAgainSign.SetActive(true);
         UpdateFrame(currentTime);
-        SyncVideoTime(); // 拖拉時強制影片跳躍到對應影格
     }
 
     // 精準計算並設定影片時間
@@ -385,13 +399,21 @@ public class DataReplayer : MonoBehaviour
         if (videoPlayer == null || motionData == null) return;
 
         float expectedVideoTime = currentTime - syncDelay;
+        Debug.Log("expected video time: " + expectedVideoTime);
 
         if (expectedVideoTime < 0f)
         {
             expectedVideoTime = 0f; // 影片尚未開始
         }
-
-        videoPlayer.time = expectedVideoTime;
+        else
+        {
+            if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 2f)
+            {
+                videoPlayer.time = expectedVideoTime;
+                Debug.Log("Force jump to:" + expectedVideoTime);
+                videoPlayer.Play();
+            }
+        }
     }
 
     private void UpdateFrame(float time)
@@ -443,7 +465,7 @@ public class DataReplayer : MonoBehaviour
         }
         else
         {
-            int trailLengthFrames = Mathf.RoundToInt(trailLengthSlider.value * 20);
+            int trailLengthFrames = Mathf.RoundToInt(trailLengthSlider.value * 60);
             trailStartIndex = Mathf.Max(0, currentFrameIndex - trailLengthFrames);
             pointCount = currentFrameIndex - trailStartIndex + 1; // 畫到當前時間格
         }
@@ -543,6 +565,9 @@ public class DataReplayer : MonoBehaviour
         float displaySpeed = Mathf.Abs(speedMult);
 
         playSpeedText.text = $"{direction} x {displaySpeed}";
+
+        notSupportSign.SetActive(speedMult < 0);
+        if(speedMult < 0 && !hitAgainSign.activeSelf) hitAgainSign.SetActive(true);
     }
     private void ToggleDisplayMode()
     {
