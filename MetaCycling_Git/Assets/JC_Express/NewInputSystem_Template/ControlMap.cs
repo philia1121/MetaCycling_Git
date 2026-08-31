@@ -502,6 +502,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""BarEnable"",
+                    ""type"": ""Button"",
+                    ""id"": ""804b8ebe-70fd-494e-b88f-5a62a08fd87d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1175,6 +1184,39 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""MasterControl"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""One Modifier"",
+                    ""id"": ""9462abed-7830-4437-98e7-08966b4769aa"",
+                    ""path"": ""OneModifier"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BarEnable"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier"",
+                    ""id"": ""4e441ed9-6668-457b-b974-a186ba304ab2"",
+                    ""path"": ""<XRController>{LeftHand}/{PrimaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BarEnable"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""f481511e-d29e-409a-8568-2372442e6092"",
+                    ""path"": ""<XRController>{LeftHand}/{SecondaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BarEnable"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1221,6 +1263,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_ReCenter = m_Prototype.FindAction("ReCenter", throwIfNotFound: true);
         m_Prototype_Zoom = m_Prototype.FindAction("Zoom", throwIfNotFound: true);
         m_Prototype_MasterControl = m_Prototype.FindAction("MasterControl", throwIfNotFound: true);
+        m_Prototype_BarEnable = m_Prototype.FindAction("BarEnable", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1462,6 +1505,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_ReCenter;
     private readonly InputAction m_Prototype_Zoom;
     private readonly InputAction m_Prototype_MasterControl;
+    private readonly InputAction m_Prototype_BarEnable;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -1490,6 +1534,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @ReCenter => m_Wrapper.m_Prototype_ReCenter;
         public InputAction @Zoom => m_Wrapper.m_Prototype_Zoom;
         public InputAction @MasterControl => m_Wrapper.m_Prototype_MasterControl;
+        public InputAction @BarEnable => m_Wrapper.m_Prototype_BarEnable;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1571,6 +1616,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @MasterControl.started += instance.OnMasterControl;
             @MasterControl.performed += instance.OnMasterControl;
             @MasterControl.canceled += instance.OnMasterControl;
+            @BarEnable.started += instance.OnBarEnable;
+            @BarEnable.performed += instance.OnBarEnable;
+            @BarEnable.canceled += instance.OnBarEnable;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -1647,6 +1695,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @MasterControl.started -= instance.OnMasterControl;
             @MasterControl.performed -= instance.OnMasterControl;
             @MasterControl.canceled -= instance.OnMasterControl;
+            @BarEnable.started -= instance.OnBarEnable;
+            @BarEnable.performed -= instance.OnBarEnable;
+            @BarEnable.canceled -= instance.OnBarEnable;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -1706,5 +1757,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnReCenter(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnMasterControl(InputAction.CallbackContext context);
+        void OnBarEnable(InputAction.CallbackContext context);
     }
 }

@@ -3,6 +3,7 @@ using Meta.XR.MultiplayerBlocks.Shared;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -100,14 +101,16 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private Button sortListBtn;
     [SerializeField] private TMP_Text sortListText;
 
-    //[Header("Position Indicators")]
-    //[SerializeField] private GameObject startPrefab;
-    //[SerializeField] private TMP_Text moveDistText;
-    //[SerializeField] private TMP_Text heightTxt;
+    [Header("Audio Feedback")]
+    [SerializeField] private AudioSource audioBGM;
+    [SerializeField] private AudioSource audioSFX;
+    [SerializeField] private AudioClip clipStart;
+    [SerializeField] private AudioClip clipEnd;
 
     [Header("special")]
     [SerializeField] private UIPlayerMovementStats m_stats;
     [SerializeField] private TMP_Text logTxt;
+    [SerializeField] private TMP_Text extraInfo;
 
     private FitnessTestManager m_fitness;
     private PathVisualizer m_path;
@@ -122,6 +125,8 @@ public class FitnessUIManager : MonoBehaviour
     private bool isHidden = true;
     private bool isMasterControl = false;
     private JumpResult jumpRes;
+
+    private bool isBarEnabled;
 
     //recording effect bcs its not apparent enough
     private Coroutine recordingAnimationCoroutine;
@@ -159,6 +164,7 @@ public class FitnessUIManager : MonoBehaviour
         ActivateIcon("");
         sortListText.text = m_replay.isSortByName ? "name" : "time";
         playbackSlider.gameObject.SetActive(false);
+        isBarEnabled = barGameObj.activeSelf;
 
         //make sure text is correct
         hideFloatingHeadText.text = "Show Statue Replay";
@@ -210,16 +216,29 @@ public class FitnessUIManager : MonoBehaviour
                 EndRecord();
         };
 
+        controlMap.Prototype.BarEnable.started += ctx =>
+        {
+            bool _tmp = isBarEnabled;
+            barGameObj.SetActive(!_tmp);
+            barInfo.gameObject.SetActive(!_tmp);
+            extraInfo.gameObject.SetActive(!_tmp);
+            isBarEnabled = !_tmp;
+        };
+
         #region Start and Stop recording
 
 
         nameStartBtn.onClick.AddListener(() =>
         {
             StartRecord();
+            audioSFX.PlayOneShot(clipStart);
+            audioBGM.PlayDelayed(.5f);
         });
 
         endBtn.onClick.AddListener(() => {
             EndRecord();
+            audioBGM.Stop();
+            audioSFX.PlayOneShot(clipEnd);
         });
 
         #endregion
