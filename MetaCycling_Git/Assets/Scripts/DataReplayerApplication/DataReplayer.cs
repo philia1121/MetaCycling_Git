@@ -7,6 +7,8 @@ using System.IO;
 using SFB;
 using TMPro;
 using UnityEngine.EventSystems;
+using ExitGames.Client.Photon;
+using System.Threading;
 public class DataReplayer : MonoBehaviour
 {
     [Header("Game Objects")]
@@ -38,6 +40,7 @@ public class DataReplayer : MonoBehaviour
     public Toggle allhandToggle;
 
     [Header("視覺化特效 (軌跡與面向)")]
+    public Button ResetViewButton;
     public Button modeToggleButton; // 👇 新增：用來切換 Show All / Trailing 的按鈕
     public TextMeshProUGUI modeButtonText;
     private bool isShowAllMode = false;
@@ -62,6 +65,7 @@ public class DataReplayer : MonoBehaviour
     public VideoPlayer videoPlayer;      // 👇 綁定 Unity 的 VideoPlayer
     public TMP_InputField syncDelayInput;    // 👇 讓使用者輸入延遲秒數的 UI (例如輸入 0.15)
     public float syncDelay = 0.15f;     // 預設影片比 JSON 慢 0.15 秒
+    public Button refreshButton;
 
     [Header("Video Cover")]
     public GameObject notSupportSign;
@@ -97,6 +101,12 @@ public class DataReplayer : MonoBehaviour
         float[] slowSpeeds = { 0.75f, 0.5f, 0.25f, 1 };
         float[] fastSpeeds = { 1.5f, 2f, 3f, 1 };
         float[] rewindSpeeds = { -1f, -1.5f, -2f, -3f, 1 };
+
+        refreshButton.onClick.AddListener(() =>
+        {
+            AutoStopAndRestart();
+        }
+        );
 
         playPauseButton.onClick.AddListener(() =>
         {
@@ -194,9 +204,9 @@ public class DataReplayer : MonoBehaviour
         if (syncDelayInput != null)
         {
             syncDelayInput.text = syncDelay.ToString("F3");
-            syncDelayInput.onValueChanged.AddListener(val =>
+            syncDelayInput.onEndEdit.AddListener(val =>
             {
-                hitAgainSign.SetActive(true);
+                // hitAgainSign.SetActive(true);
                 if (float.TryParse(val, out float res))
                 {
                     syncDelay = res;
@@ -292,6 +302,7 @@ public class DataReplayer : MonoBehaviour
             UpdateFrame(currentTime);
             UpdateTrailLines();
             SyncVideoTime();
+            ResetViewButton.onClick.Invoke();
 
             UpdateSpeedDisplay();
         }
@@ -347,13 +358,17 @@ public class DataReplayer : MonoBehaviour
             // 處理播放時的影片同步防漂移 (Drift Correction)
             if (videoPlayer != null)
             {
-                float expectedVideoTime = currentTime - syncDelay;
+                float expectedVideoTime = Mathf.Round((currentTime - syncDelay) * 100) / 100f;
+                // Debug.Log("expected Time: " + expectedVideoTime);
 
                 // 如果 JSON 剛開始播，但還沒到影片開始的時間 (例如 JSON 的前 0.15 秒)
-                if (expectedVideoTime < 0f)
+                if (expectedVideoTime < 0f | expectedVideoTime > videoPlayer.length)
                 {
-                    if (videoPlayer.isPlaying) videoPlayer.Pause();
-                    videoPlayer.time = 0f;
+                    if (videoPlayer.isPlaying)
+                    {
+                        videoPlayer.Stop();
+                        Debug.Log("with stop");
+                    }
                 }
                 else
                 {
@@ -363,24 +378,29 @@ public class DataReplayer : MonoBehaviour
                         // 正播：開啟 VideoPlayer 播放，處理時間漂移校正
                         if (!videoPlayer.isPlaying) videoPlayer.Play();
                         videoPlayer.playbackSpeed = speedMult;
+                        // Debug.Log("Play: " + videoPlayer.isPlaying);
 
-                        if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.1f)
+                        if (videoPlayer.isPrepared & Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.12f)
                         {
                             videoPlayer.time = expectedVideoTime;
+                            Debug.Log("Force jump to " + expectedVideoTime);
                         }
                     }
-                    else
-                    {
-                        // 倒播：暫停 VideoPlayer，全權由程式覆寫時間以達到流暢倒轉
-                        // if (videoPlayer.isPlaying) videoPlayer.Pause();
-                        videoPlayer.time = expectedVideoTime;
-                        Debug.Log("Force Reverse");
-                    }
                 }
+                if (speedMult > 0 & !videoPlayer.isPrepared) AutoStopAndRestart();
             }
+
+            DrawOrientations();
         }
 
-        DrawOrientations();
+    }
+    void AutoStopAndRestart()
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            Debug.Log("button pressed");
+            playPauseButton.onClick.Invoke();
+        }
     }
 
     private void OnTimelineScrub(float value)
@@ -389,7 +409,7 @@ public class DataReplayer : MonoBehaviour
 
         currentTime = value;
         // SyncVideoTime(); // 拖拉時強制影片跳躍到對應影格
-        hitAgainSign.SetActive(true);
+        // hitAgainSign.SetActive(true);
         UpdateFrame(currentTime);
     }
 
@@ -398,22 +418,35 @@ public class DataReplayer : MonoBehaviour
     {
         if (videoPlayer == null || motionData == null) return;
 
-        float expectedVideoTime = currentTime - syncDelay;
-        Debug.Log("expected video time: " + expectedVideoTime);
+        float expectedVideoTime = Mathf.Round((currentTime - syncDelay) * 100) / 100f;
+        // Debug.Log("expected video time: " + expectedVideoTime);
 
-        if (expectedVideoTime < 0f)
+        if (expectedVideoTime < 0f | expectedVideoTime > videoPlayer.length)
         {
-            expectedVideoTime = 0f; // 影片尚未開始
+            if (videoPlayer.isPlaying)
+            {
+                videoPlayer.Stop();
+                videoPlayer.time = 0;
+                Debug.Log("with pause");
+            }
         }
         else
         {
-            if (Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 2f)
+            if (speedMult > 0)
             {
-                videoPlayer.time = expectedVideoTime;
-                Debug.Log("Force jump to:" + expectedVideoTime);
-                videoPlayer.Play();
+                // 正播：開啟 VideoPlayer 播放，處理時間漂移校正
+                if (!videoPlayer.isPlaying) videoPlayer.Play();
+                videoPlayer.playbackSpeed = speedMult;
+                Debug.Log("Play: " + videoPlayer.isPlaying);
+
+                if (videoPlayer.isPrepared & Mathf.Abs((float)videoPlayer.time - expectedVideoTime) > 0.1f)
+                {
+                    videoPlayer.time = expectedVideoTime;
+                    Debug.Log("Force jump to " + expectedVideoTime);
+                }
             }
         }
+        if (speedMult > 0 & !videoPlayer.isPrepared) AutoStopAndRestart();
     }
 
     private void UpdateFrame(float time)
@@ -567,7 +600,7 @@ public class DataReplayer : MonoBehaviour
         playSpeedText.text = $"{direction} x {displaySpeed}";
 
         notSupportSign.SetActive(speedMult < 0);
-        if(speedMult < 0 && !hitAgainSign.activeSelf) hitAgainSign.SetActive(true);
+        refreshButton.interactable = speedMult > 0;
     }
     private void ToggleDisplayMode()
     {
