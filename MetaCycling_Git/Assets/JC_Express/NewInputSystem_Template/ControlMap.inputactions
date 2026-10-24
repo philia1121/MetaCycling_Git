@@ -1164,9 +1164,9 @@
                     "isPartOfComposite": true
                 },
                 {
-                    "name": "One Modifier",
-                    "id": "9462abed-7830-4437-98e7-08966b4769aa",
-                    "path": "OneModifier",
+                    "name": "Two Modifiers",
+                    "id": "89759a34-7ac3-4fec-b2f0-3613f99dd538",
+                    "path": "TwoModifiers",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -1175,8 +1175,19 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "modifier",
-                    "id": "4e441ed9-6668-457b-b974-a186ba304ab2",
+                    "name": "modifier1",
+                    "id": "651d039d-a806-4a2e-bd99-235d3a08b88a",
+                    "path": "<XRController>{RightHand}/gripButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "BarEnable",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "modifier2",
+                    "id": "b22cde86-d122-4898-996a-ee4e8d3d4f74",
                     "path": "<XRController>{LeftHand}/{PrimaryButton}",
                     "interactions": "",
                     "processors": "",
@@ -1187,7 +1198,7 @@
                 },
                 {
                     "name": "binding",
-                    "id": "f481511e-d29e-409a-8568-2372442e6092",
+                    "id": "5369fe6f-f3b3-4988-99e6-50fdc27d04c9",
                     "path": "<XRController>{LeftHand}/{SecondaryButton}",
                     "interactions": "",
                     "processors": "",

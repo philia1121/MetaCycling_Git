@@ -1,5 +1,6 @@
 //using Meta.XR.ImmersiveDebugger.UserInterface.Generic;
 using Meta.XR.MultiplayerBlocks.Shared;
+using Mirror;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -112,7 +113,7 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private TMP_Text logTxt;
     [SerializeField] private TMP_Text extraInfo;
 
-    private FitnessTestManager m_fitness;
+    private FitnessManager m_fitness;
     private PathVisualizer m_path;
     private ReplayManager m_replay;
     private TrajectoryRecorder_Config m_recorder;
@@ -122,7 +123,7 @@ public class FitnessUIManager : MonoBehaviour
     private string playerName;
 
     private bool isPlaying = false;
-    private bool isHidden = true;
+    [ShowInInspector] private bool isHidden = false;
     private bool isMasterControl = false;
     private JumpResult jumpRes;
 
@@ -152,7 +153,7 @@ public class FitnessUIManager : MonoBehaviour
 
     private void Start()
     {
-        m_fitness = FitnessTestManager.instance;
+        m_fitness = FitnessManager.instance;
         m_path = PathVisualizer.instance;
         m_replay = ReplayManager.instance;
         m_recorder = TrajectoryRecorder_Config.instance;
@@ -168,6 +169,7 @@ public class FitnessUIManager : MonoBehaviour
 
         //make sure text is correct
         hideFloatingHeadText.text = "Show Statue Replay";
+        m_path.SetHandsVisibility(isHidden);
         hideInfo.text = isHidden ? $"Hide Hands" : $"Show Hands";
         hideFloatingMenuText.text = sortListGameObj.activeSelf ? "Hide Floating Menu" : "Show Floating Menu";
         //hide replay
@@ -231,14 +233,12 @@ public class FitnessUIManager : MonoBehaviour
         nameStartBtn.onClick.AddListener(() =>
         {
             StartRecord();
-            audioSFX.PlayOneShot(clipStart);
-            audioBGM.PlayDelayed(.5f);
+            
         });
 
         endBtn.onClick.AddListener(() => {
             EndRecord();
-            audioBGM.Stop();
-            audioSFX.PlayOneShot(clipEnd);
+            
         });
 
         #endregion
@@ -327,7 +327,7 @@ public class FitnessUIManager : MonoBehaviour
         });
 
         resetBtn.onClick.AddListener(()=> { 
-            m_fitness.ClearTrackingData();
+            //m_fitness.ClearTrackingData();
             playbackSlider.gameObject.SetActive(false);
             barInfo.text = $"";
         });
@@ -619,6 +619,9 @@ public class FitnessUIManager : MonoBehaviour
             }
         });
 
+        audioSFX.PlayOneShot(clipStart);
+        audioBGM.PlayDelayed(.5f);
+
         if (UnityEngine.EventSystems.EventSystem.current != null)
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
     }
@@ -661,6 +664,9 @@ public class FitnessUIManager : MonoBehaviour
 
             speedUIBtn.gameObject.SetActive(true);
             settingUIBtn.gameObject.SetActive(true);
+            
+            audioBGM.Stop();
+            audioSFX.PlayOneShot(clipEnd);
         }
         m_stats.UpdateMovementType(motType, false);
         m_stats.ChangeDisplay(motType, true);

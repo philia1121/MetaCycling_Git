@@ -22,7 +22,7 @@ public class ReplayManager : MonoBehaviour
     public static ReplayManager instance;
 
     private string folderPath;
-    private FitnessTestManager m_Fitness;
+    private FitnessManager m_Fitness;
     private PathVisualizer m_Path;
 
     private Vector3 calibratedStartpos;
@@ -38,7 +38,7 @@ public class ReplayManager : MonoBehaviour
 
     private void Start()
     {
-        m_Fitness = FitnessTestManager.instance;
+        m_Fitness = FitnessManager.instance;
         m_Path = PathVisualizer.instance;
 
         folderPath = Application.persistentDataPath;
