@@ -61,7 +61,9 @@ public class WebcamToMP4 : MonoBehaviour
         var controllerSettings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
         m_RecorderController = new RecorderController(controllerSettings);
 
-        var mediaOutputFolder = new DirectoryInfo(Path.Combine(Application.dataPath, "..", "SampleRecordings"));
+        string mediaOutputFolder = Path.Combine(Application.persistentDataPath, "StreamedFiles");
+
+        //var mediaOutputFolder = new DirectoryInfo(Path.Combine(Application.persistentDataPath, "..", "SampleRecordings"));
 
         // Video Settings Definition
         m_Settings = ScriptableObject.CreateInstance<MovieRecorderSettings>();
@@ -81,7 +83,7 @@ public class WebcamToMP4 : MonoBehaviour
             RenderTexture = m_RecordingRenderTexture
         };
 
-        m_Settings.OutputFile = Path.Combine(mediaOutputFolder.FullName, targetFileName);
+        m_Settings.OutputFile = Path.Combine(mediaOutputFolder, targetFileName);
 
         controllerSettings.AddRecorderSettings(m_Settings);
         controllerSettings.SetRecordModeToManual();
