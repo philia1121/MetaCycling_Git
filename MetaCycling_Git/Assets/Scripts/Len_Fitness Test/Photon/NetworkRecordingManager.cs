@@ -36,12 +36,9 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     [Header("Join Room Panel Items")]
     [SerializeField] private GameObject joinRoomPanelObj;
     [SerializeField] private TMP_InputField joinRoominput;
-    //[SerializeField] private Button joinRoomBtn;
 
     [Header("Request Record Panel Items")]
     [SerializeField] private GameObject requestRecordingPanel;
-    //[SerializeField] private Button requestRecordBtn;
-    //[SerializeField] private Button leaveRoomButton;
     [SerializeField] private TMP_Text requestRecordBtnText;
     private bool isCurrentlyRecordingVideo = false;              //flag to toggle the recording thing
 
@@ -67,8 +64,6 @@ public class NetworkRecordingManager : MonoBehaviourPunCallbacks
     private bool isPlatformSetup = false;
     private WebCamTexture activeWebCamTexture;
     private string webcamName;
-
-
 
     private GameObject spawnedLocalVRPlayer;
     private Button activeJoinButtonRef; // button that was disabled during joining
