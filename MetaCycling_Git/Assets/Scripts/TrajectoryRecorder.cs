@@ -3,7 +3,6 @@ using Firebase.Firestore;
 using Firebase.Storage;
 using Google.MiniJSON;
 using Newtonsoft.Json;
-using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -115,7 +114,7 @@ public class TrajectoryRecorder : MonoBehaviour
             networkArrayBuffer.Clear();
             lastNetworkFlushTime = Time.time;
 
-            if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+            if (NetworkRecordingManager.Instance.inRoom)
             {
                 string filename = $"{filePrefix}_{recordData.recordTime}";
                 NetworkRecordingManager.Instance.RequestStartRecord(filename);
@@ -134,7 +133,7 @@ public class TrajectoryRecorder : MonoBehaviour
             SaveToFile();
             Debug.Log("stop recording");
 
-            if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+            if (NetworkRecordingManager.Instance.inRoom)
             {
                 string[] finalRemainingChunk = networkArrayBuffer.ToArray();
                 string filename = $"{filePrefix}_{recordData.recordTime}";
@@ -172,7 +171,7 @@ public class TrajectoryRecorder : MonoBehaviour
         recordData.recordTime = $"{System.DateTime.Now:yyyy_MM_dd_HH_mm_ss_}";
         recordData.sampleInterval = Math.Round(recordInterval, 4);
 
-        if (PhotonNetwork.InRoom && NetworkRecordingManager.Instance != null)
+        if (NetworkRecordingManager.Instance.inRoom)
         {
             NetworkRecordingManager.Instance.RequestStreamInit(
                 recordData.userName,
@@ -199,7 +198,7 @@ public class TrajectoryRecorder : MonoBehaviour
         if (Time.time - lastNetworkFlushTime >= networkFlushInterval)
         {
             // PUN CHECKER: Process array flushes to the stream chunk processor only if connected to a network session
-            if (PhotonNetwork.InRoom && networkArrayBuffer.Count > 0 && NetworkRecordingManager.Instance != null)
+            if (NetworkRecordingManager.Instance.inRoom && networkArrayBuffer.Count > 0)
             {
                 string[] chunkToSend = networkArrayBuffer.ToArray();
                 NetworkRecordingManager.Instance.RequestStreamChunk(chunkToSend);

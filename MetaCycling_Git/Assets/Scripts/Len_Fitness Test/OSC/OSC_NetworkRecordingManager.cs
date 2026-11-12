@@ -163,13 +163,14 @@ public class OSC_NetworkRecordingManager : MonoBehaviour
     private void Start()
     {
         overlayCamera.gameObject.SetActive(false);
-        StartCoroutine(InitRoutine());
+        StartCoroutine(InitRoutine());  //adding small delay just in case, needs everything to be setup first
     }
 
     private IEnumerator InitRoutine()
     {
-        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame(); 
 
+        //make sure it assumes as not connected at all
         OnNetworkConnected?.Invoke(false);
         OnRoomJoined?.Invoke(false);
 
@@ -223,7 +224,7 @@ public class OSC_NetworkRecordingManager : MonoBehaviour
     {
         if (paused || !socketsReady) return;
 
-        // headset woke up: sockets are often dead after sleep
+        // headset woke up: sockets are often dead after sleep, open and close sockets
         Debug.LogWarning("[Resume] Re-opening OSC sockets");
         receiver.Close(); receiver.Connect();
         transmitter.Close(); transmitter.Connect();

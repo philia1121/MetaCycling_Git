@@ -56,6 +56,8 @@ public class FitnessUIManager : MonoBehaviour
     [SerializeField] private bool isHidingReplay = true;           
 
     [Header("Network Related")]
+    [SerializeField] private GameObject manualIPInpGameObj;            //room name input field
+
     [SerializeField] private GameObject roomInpGameObj;         //parent for this header
     [SerializeField] private TMP_InputField roomInp;            //room name input field
     [SerializeField] private Button roomJoimBtn;                //join this room
@@ -125,6 +127,7 @@ public class FitnessUIManager : MonoBehaviour
     private bool isPlaying = false;
     [ShowInInspector] private bool isHidden = false;
     private bool isMasterControl = false;
+    private bool isManualIP = false;
     private JumpResult jumpRes;
 
     private bool isBarEnabled;
@@ -205,6 +208,13 @@ public class FitnessUIManager : MonoBehaviour
         {
             isMasterControl = !isMasterControl;
             MasterControl(isMasterControl);
+        };
+
+        isManualIP = false;
+        controlMap.Prototype.ManualIPInput.started += ctx =>
+        {
+            isManualIP = !isManualIP;
+            manualIPInpGameObj.SetActive(isManualIP);
         };
 
         controlMap.Prototype.Record.started += ctx =>

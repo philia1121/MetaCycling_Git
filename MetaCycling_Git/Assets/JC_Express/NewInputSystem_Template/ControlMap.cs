@@ -511,6 +511,15 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ManualIPInput"",
+                    ""type"": ""Button"",
+                    ""id"": ""853a6d19-8ecc-4106-a299-e4ff4399ad3f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1228,6 +1237,50 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
                     ""action"": ""BarEnable"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""Two Modifiers"",
+                    ""id"": ""97453ee4-49c8-4549-90ce-fbe9c9fc44da"",
+                    ""path"": ""TwoModifiers"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ManualIPInput"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""modifier1"",
+                    ""id"": ""20788c30-382c-45e7-8977-3357e4f8ca0d"",
+                    ""path"": ""<XRController>{RightHand}/gripButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ManualIPInput"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""modifier2"",
+                    ""id"": ""a84c17f6-a7ba-4fa4-a7ed-37b4e5076e9e"",
+                    ""path"": ""<XRController>{RightHand}/{PrimaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ManualIPInput"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""binding"",
+                    ""id"": ""403cde3e-f498-411c-b728-2679b6d9d5ee"",
+                    ""path"": ""<XRController>{RightHand}/{SecondaryButton}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ManualIPInput"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -1275,6 +1328,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         m_Prototype_Zoom = m_Prototype.FindAction("Zoom", throwIfNotFound: true);
         m_Prototype_MasterControl = m_Prototype.FindAction("MasterControl", throwIfNotFound: true);
         m_Prototype_BarEnable = m_Prototype.FindAction("BarEnable", throwIfNotFound: true);
+        m_Prototype_ManualIPInput = m_Prototype.FindAction("ManualIPInput", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -1517,6 +1571,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
     private readonly InputAction m_Prototype_Zoom;
     private readonly InputAction m_Prototype_MasterControl;
     private readonly InputAction m_Prototype_BarEnable;
+    private readonly InputAction m_Prototype_ManualIPInput;
     public struct PrototypeActions
     {
         private @ControlMap m_Wrapper;
@@ -1546,6 +1601,7 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         public InputAction @Zoom => m_Wrapper.m_Prototype_Zoom;
         public InputAction @MasterControl => m_Wrapper.m_Prototype_MasterControl;
         public InputAction @BarEnable => m_Wrapper.m_Prototype_BarEnable;
+        public InputAction @ManualIPInput => m_Wrapper.m_Prototype_ManualIPInput;
         public InputActionMap Get() { return m_Wrapper.m_Prototype; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1630,6 +1686,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @BarEnable.started += instance.OnBarEnable;
             @BarEnable.performed += instance.OnBarEnable;
             @BarEnable.canceled += instance.OnBarEnable;
+            @ManualIPInput.started += instance.OnManualIPInput;
+            @ManualIPInput.performed += instance.OnManualIPInput;
+            @ManualIPInput.canceled += instance.OnManualIPInput;
         }
 
         private void UnregisterCallbacks(IPrototypeActions instance)
@@ -1709,6 +1768,9 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
             @BarEnable.started -= instance.OnBarEnable;
             @BarEnable.performed -= instance.OnBarEnable;
             @BarEnable.canceled -= instance.OnBarEnable;
+            @ManualIPInput.started -= instance.OnManualIPInput;
+            @ManualIPInput.performed -= instance.OnManualIPInput;
+            @ManualIPInput.canceled -= instance.OnManualIPInput;
         }
 
         public void RemoveCallbacks(IPrototypeActions instance)
@@ -1769,5 +1831,6 @@ public partial class @ControlMap: IInputActionCollection2, IDisposable
         void OnZoom(InputAction.CallbackContext context);
         void OnMasterControl(InputAction.CallbackContext context);
         void OnBarEnable(InputAction.CallbackContext context);
+        void OnManualIPInput(InputAction.CallbackContext context);
     }
 }

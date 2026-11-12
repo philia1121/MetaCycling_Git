@@ -1,0 +1,4 @@
+OSC Setup:
+- win+R => wf.msc
+- Inbound Rule => disable all Unity Blocking actions (do NOT delete)
+- Add Inbound Rule, Port =>7000-7002, allow connection, tick private and public, named Unity OSC

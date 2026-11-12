@@ -8,6 +8,7 @@ public class CameraAutoHook : MonoBehaviour
     [SerializeField] private ThirdPersonCamera orbitCam;
     [SerializeField] private FixedTouchField touchField;
     [SerializeField] private GameObject planeFab;
+    [SerializeField] private GameObject target;
 
     private void Start()
     {
@@ -26,21 +27,8 @@ public class CameraAutoHook : MonoBehaviour
 
     private void FindAndHookTarget()
     {
-        // Find all TrackingManagers instantiated over Photon
-        TrackingManager[] trackers = FindObjectsByType<TrackingManager>(FindObjectsSortMode.None);
-
-        foreach (var tracker in trackers)
-        {
-            PhotonView pv = tracker.GetComponentInParent<PhotonView>();
-
-            // We want to track the REMOTE player (The Headset client, which is NOT Mine on PC)
-            if (pv != null && !pv.IsMine && tracker.userBasePos != null)
-            {
-                orbitCam.SetTarget(tracker.userBasePos);
-                orbitCam.SetTouchFIeld(touchField);
-                Debug.Log($"[PC Spectator] Successfully locked camera onto VR Player footprint anchor!");
-                break;
-            }
-        }
+            orbitCam.SetTarget(target.transform);
+            orbitCam.SetTouchFIeld(touchField);
+            Debug.Log($"[PC Spectator] Successfully locked camera onto VR Player footprint anchor!");
     }
 }
