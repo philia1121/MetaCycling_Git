@@ -117,7 +117,7 @@ public class FitnessUIManager : MonoBehaviour
 
     private FitnessManager m_fitness;
     private PathVisualizer m_path;
-    private ReplayManager m_replay;
+    //private ReplayManager m_replay;
     private TrajectoryRecorder_Config m_recorder;
     private NetworkRecordingManager m_network;
 
@@ -158,7 +158,7 @@ public class FitnessUIManager : MonoBehaviour
     {
         m_fitness = FitnessManager.instance;
         m_path = PathVisualizer.instance;
-        m_replay = ReplayManager.instance;
+        //m_replay = ReplayManager.instance;
         m_recorder = TrajectoryRecorder_Config.instance;
         m_network = NetworkRecordingManager.Instance;
 
@@ -166,7 +166,7 @@ public class FitnessUIManager : MonoBehaviour
         endBtn.gameObject.SetActive(false);
         barInfo.text = "";
         ActivateIcon("");
-        sortListText.text = m_replay.isSortByName ? "name" : "time";
+        //sortListText.text = m_replay.isSortByName ? "name" : "time";
         playbackSlider.gameObject.SetActive(false);
         isBarEnabled = barGameObj.activeSelf;
 
@@ -575,9 +575,9 @@ public class FitnessUIManager : MonoBehaviour
 
         #region sorting list button setup
         sortListBtn.onClick.AddListener(() => {
-            m_replay.isSortByName = !m_replay.isSortByName;
-            sortListText.text = m_replay.isSortByName ? "name" : "time";
-            m_replay.RefreshReplayList();
+            //m_replay.isSortByName = !m_replay.isSortByName;
+            //sortListText.text = m_replay.isSortByName ? "name" : "time";
+            //m_replay.RefreshReplayList();
         });
         #endregion
     }
@@ -658,7 +658,7 @@ public class FitnessUIManager : MonoBehaviour
 
             densitySlider.value = 1;
 
-            m_replay.RefreshReplayList();
+            //m_replay.RefreshReplayList();
             ActivateIcon("");
             barInfo.text = $"";
 
